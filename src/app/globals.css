@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Paleta inicial inspirada no padrão TETTU (marinho e roxo). Ajustável quando a marca for definida. */
+:root {
+  --bg: #f4f5f9;
+  --surface: #ffffff;
+  --muted: #eceef4;
+  --line: #d9dce6;
+  --ink: #16264d;
+  --text: #1f2433;
+  --subtle: #5c6378;
+  --brand: #5b3fa0;
+  --brand-strong: #472f82;
+  --danger: #c0262d;
+  --ok: #1d7a46;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1424;
+    --surface: #171d31;
+    --muted: #222a42;
+    --line: #2e3753;
+    --ink: #e7eafc;
+    --text: #d9dcea;
+    --subtle: #9aa2ba;
+    --brand: #8d6fe0;
+    --brand-strong: #7a5bd0;
+    --danger: #f06a70;
+    --ok: #4cc584;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-text: var(--text);
+  --color-subtle: var(--subtle);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --font-sans: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
