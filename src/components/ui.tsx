@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { maskBRL } from "@/lib/money";
 
 export const inputClass =
   "w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60";
@@ -50,4 +51,23 @@ export function FormMessage({ error, info }: { error?: string; info?: string }) 
   if (error) return <p className="text-sm text-danger" role="alert">{error}</p>;
   if (info) return <p className="text-sm text-ok" role="status">{info}</p>;
   return null;
+}
+
+/** Campo de valor em reais com máscara (pontos e vírgula automáticos). */
+export function CurrencyInput({ name, defaultValue = "" }: { name: string; defaultValue?: string }) {
+  const [value, setValue] = useState(() => maskBRL(defaultValue));
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-subtle">R$</span>
+      <input
+        name={name}
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="0,00"
+        value={value}
+        onChange={(e) => setValue(maskBRL(e.target.value))}
+        className={`${inputClass} pl-10 text-right tabular-nums`}
+      />
+    </div>
+  );
 }

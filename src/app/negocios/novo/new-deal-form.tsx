@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Field, FormMessage, inputClass, SubmitButton } from "@/components/ui";
+import { CurrencyInput, Field, FormMessage, inputClass, SubmitButton } from "@/components/ui";
 import { DEAL_KIND_LABEL, DEAL_KINDS } from "@/lib/domain";
 import { createDeal, type ActionState } from "../actions";
 
@@ -40,8 +40,8 @@ export function NewDealForm({ orgs }: { orgs: { id: string; name: string }[] }) 
       <Field label="Nome do negócio" hint="Ex.: Apto 101 – Rua das Flores, 200 ou Aquisição AME Clínica">
         <input name="title" required minLength={2} maxLength={200} className={inputClass} />
       </Field>
-      <Field label="Valor do negócio (R$)" hint="Opcional">
-        <input name="price" inputMode="decimal" placeholder="1.250.000,00" className={inputClass} />
+      <Field label="Valor do negócio" hint="Opcional. Digite só os números: pontos e vírgula entram sozinhos.">
+        <CurrencyInput name="price" />
       </Field>
       <Field label="Observações" hint="Opcional">
         <textarea name="notes" rows={3} maxLength={5000} className={inputClass} />
