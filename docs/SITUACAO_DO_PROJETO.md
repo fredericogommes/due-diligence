@@ -30,7 +30,7 @@
 
 | Item | Estado |
 |---|---|
-| Código das etapas M0–M6 | **Pronto e commitado** (branch `main`, sem remoto) |
+| Código das etapas M0–M6 | **Pronto e commitado** (branch `main`, no GitHub) |
 | Testes automáticos | **122 passando** (`npm test`), além de typecheck, lint e build sem erros |
 | Banco Supabase real | **Não existe ainda.** As migrações só rodaram no PGlite (Postgres em memória) dentro dos testes |
 | Login, cadastro, upload e IA no navegador | **Nunca testados de ponta a ponta**, porque dependem do Supabase real |
@@ -38,7 +38,7 @@
 | Leitura por IA | Implementada e testada com dublê. **Nunca chamou a API real** (falta `ANTHROPIC_API_KEY`) |
 | Certidões online (ONR) | Arquitetura pronta; o provedor fica **desativado de propósito** até chegarem a chave e a documentação oficial |
 | Deploy (Vercel) | **Não feito** |
-| GitHub / CI | Workflow pronto em `.github/workflows/ci.yml` (lint, typecheck, testes, build, gitleaks). **Falta criar o repositório** e enviar o código |
+| GitHub / CI | Repositório privado `fredericogommes/due-diligence`. CI em `.github/workflows/ci.yml` (lint, typecheck, testes, build, gitleaks no histórico inteiro) **passando** |
 
 `.env.local` existe, mas tem apenas os **valores de exemplo** (`https://SEU-PROJETO...`). Ele não vai no backup e não está no Git.
 
