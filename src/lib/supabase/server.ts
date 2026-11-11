@@ -1,10 +1,14 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { supabaseEnv } from "@/lib/env";
 
 /** Cliente Supabase para Server Components, Server Actions e Route Handlers. */
 export async function createClient() {
+  // Marca a renderização como dinâmica antes de o cliente do Supabase ler o relógio
+  // (evita o aviso "Date.now() while prerendering" dos cache components).
+  await connection();
   const cookieStore = await cookies();
   const { url, key } = supabaseEnv();
   return createServerClient(url, key, {

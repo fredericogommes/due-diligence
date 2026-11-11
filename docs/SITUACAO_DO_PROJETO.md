@@ -32,8 +32,8 @@
 |---|---|
 | Código das etapas M0–M6 | **Pronto e commitado** (branch `main`, no GitHub) |
 | Testes automáticos | **122 passando** (`npm test`), além de typecheck, lint e build sem erros |
-| Banco Supabase real | **Não existe ainda.** As migrações só rodaram no PGlite (Postgres em memória) dentro dos testes |
-| Login, cadastro, upload e IA no navegador | **Nunca testados de ponta a ponta**, porque dependem do Supabase real |
+| Banco Supabase real | **Criado** em 11/11/2026: projeto `due-diligence` (ref `igcyltxllpzayivykerk`, sa-east-1, plano gratuito), com as 8 migrações aplicadas. `.env.local` aponta para ele |
+| Teste de ponta a ponta | **Feito em 11/11/2026** com o banco real e duas contas de teste (`*@due-diligence.test`, senhas no `.env.local`): login, organização, negócio, bem, parte, checklist, upload, download por link temporário, pedido simulado, status, risco, parecer, versão revisada e assinada, histórico, convite e aceite, troca de papel. **Faltam:** cadastro com confirmação por e-mail (ver abaixo) e "Ler com IA" |
 | Tela verificada no navegador | `/demo/relatorio` (relatório com dados fictícios, só em desenvolvimento) e o redirecionamento para `/login` |
 | Leitura por IA | Implementada e testada com dublê. **Nunca chamou a API real** (falta `ANTHROPIC_API_KEY`) |
 | Certidões online (ONR) | Arquitetura pronta; o provedor fica **desativado de propósito** até chegarem a chave e a documentação oficial |
@@ -132,10 +132,9 @@ tests/                    unitários; tests/db = banco e RLS sobre as migraçõe
 ## 6. O que falta para concluir
 
 ### A. Bloqueante: depende do dono do projeto
-1. **Criar o projeto no Supabase** (região South America / São Paulo).
-   - Aplicar as migrações: SQL Editor em ordem, ou `npx supabase link` + `npx supabase db push`.
-   - Preencher o `.env.local` (`.env.example` mostra os campos).
-   - Cadastrar `http://localhost:3100/auth/confirm` em Authentication → URL Configuration.
+1. **Supabase: e-mail e URLs de autenticação** (painel do Supabase → Authentication).
+   - O provedor de e-mail padrão do Supabase só envia para e-mails da equipe do projeto e recusa os demais (`email_address_invalid`). Para clientes reais se cadastrarem é preciso configurar um **SMTP próprio** (ex.: Resend, SES) em Authentication → Emails → SMTP.
+   - Em **URL Configuration**, trocar o Site URL para `http://localhost:3100` (ou o domínio da Vercel) e cadastrar `http://localhost:3100/auth/confirm` e `https://SEU-DOMINIO/auth/confirm` nas Redirect URLs.
 2. **`ANTHROPIC_API_KEY`** para ligar a leitura por IA. Registrar a base legal de LGPD, porque os documentos vão para a API da Anthropic.
 3. **Chave e documentação da API do registrodeimoveis.org.br.** O texto do pedido está pronto em [`PEDIDO_CHAVE_REGISTRO_IMOVEIS.md`](PEDIDO_CHAVE_REGISTRO_IMOVEIS.md).
 
