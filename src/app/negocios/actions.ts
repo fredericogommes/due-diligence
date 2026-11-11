@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
+import { syncStage } from "@/lib/deals/stage";
 import { DEAL_STATUSES } from "@/lib/domain";
 import { createClient, getCurrentUserId } from "@/lib/supabase/server";
 import {
@@ -58,6 +60,17 @@ export async function deleteDeal(dealId: string): Promise<ActionState> {
   redirect("/negocios");
 }
 
+/** Depois de qualificar: avança a etapa e, se entrou na consulta prévia, roda a consulta (IA) em segundo plano. */
+async function afterQualification(supabase: NonNullable<Awaited<ReturnType<typeof authed>>>, dealId: string) {
+  const moved = await syncStage(supabase, dealId);
+  if (moved && moved.from === "qualificacao" && moved.to === "consulta") {
+    after(async () => {
+      const { runPreviews } = await import("./certificate-actions");
+      await runPreviews(dealId);
+    });
+  }
+}
+
 export async function addParty(_prev: ActionState, form: FormData): Promise<ActionState> {
   const supabase = await authed();
   if (!supabase) return SESSION_EXPIRED;
@@ -75,6 +88,7 @@ export async function addParty(_prev: ActionState, form: FormData): Promise<Acti
     notes: p.notes ?? null,
   });
   if (error) return { error: "Não foi possível adicionar a parte." };
+  await afterQualification(supabase, p.dealId);
   revalidatePath(`/negocios/${p.dealId}`);
   return { ok: true, at: Date.now() };
 }
@@ -108,6 +122,7 @@ export async function addAsset(_prev: ActionState, form: FormData): Promise<Acti
     cnpj: a.cnpj ?? null,
   });
   if (error) return { error: "Não foi possível adicionar o bem." };
+  await afterQualification(supabase, a.dealId);
   revalidatePath(`/negocios/${a.dealId}`);
   return { ok: true, at: Date.now() };
 }

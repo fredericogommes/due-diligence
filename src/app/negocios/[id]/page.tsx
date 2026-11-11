@@ -13,6 +13,10 @@ import { DEAL_KIND_LABEL, formatBRL, formatDate } from "@/lib/domain";
 import { AssetsSection } from "./assets-section";
 import { ChecklistView } from "./checklist-view";
 import { DealActions } from "./deal-actions";
+import { DealPeople } from "./deal-people";
+import { createClient } from "@/lib/supabase/server";
+import { STAGE_LABEL, type Stage } from "@/lib/board";
+import type { MemberView } from "@/lib/members";
 import { ExtraDocuments } from "./extra-documents";
 import { FindingsSection } from "./findings-section";
 import { OnlineCertificates, type Boleto } from "./online-certificates";
@@ -42,6 +46,12 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
   const data = await loadDeal(id);
   if (!data) notFound();
   const { deal, parties, assets, items, templateItems, orgName, documents, latestAnalysis, findings, certRequests } = data;
+  const supabase = await createClient();
+  const [{ data: memberData }, { data: extra }] = await Promise.all([
+    supabase.rpc("org_members", { p_org: deal.org_id }),
+    supabase.from("deals").select("stage, assignee_id, client_id").eq("id", deal.id).maybeSingle<{ stage: Stage; assignee_id: string | null; client_id: string | null }>(),
+  ]);
+  const people = ((memberData as MemberView[] | null) ?? []).map((m) => ({ id: m.user_id, name: m.full_name ?? m.email, role: m.role }));
   const ai = { analyses: latestAnalysis, aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY) };
   const today = todaySaoPaulo();
   const sections = buildChecklist(items, templateItems, parties, assets, documents, today);
@@ -98,7 +108,17 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
           <p className="mt-1 text-sm text-subtle">
             {DEAL_KIND_LABEL[deal.kind]} · {orgName} · valor {formatBRL(deal.price)} · criado em {formatDate(deal.created_at)}
           </p>
+          {extra && <p className="mt-1 text-sm">Etapa: <strong>{STAGE_LABEL[extra.stage]}</strong></p>}
           {deal.notes && <p className="mt-2 max-w-3xl whitespace-pre-line text-sm">{deal.notes}</p>}
+          <div className="mt-3">
+            <DealPeople
+              dealId={deal.id}
+              assigneeId={extra?.assignee_id ?? null}
+              clientId={extra?.client_id ?? null}
+              staff={people.filter((p) => p.role !== "cliente")}
+              clients={people.filter((p) => p.role === "cliente")}
+            />
+          </div>
         </div>
         <DealActions dealId={deal.id} status={deal.status} />
       </section>

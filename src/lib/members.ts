@@ -1,4 +1,4 @@
-export const MEMBER_ROLES = ["owner", "admin", "advogado", "corretor"] as const;
+export const MEMBER_ROLES = ["owner", "admin", "advogado", "corretor", "cliente"] as const;
 export type MemberRole = (typeof MEMBER_ROLES)[number];
 
 export const ROLE_LABEL: Record<MemberRole, string> = {
@@ -6,10 +6,11 @@ export const ROLE_LABEL: Record<MemberRole, string> = {
   admin: "Administrador",
   advogado: "Advogado",
   corretor: "Corretor",
+  cliente: "Cliente",
 };
 
 /** Papéis que se pode atribuir num convite (ninguém entra como dono). */
-export const INVITE_ROLES = ["admin", "advogado", "corretor"] as const satisfies readonly MemberRole[];
+export const INVITE_ROLES = ["admin", "advogado", "corretor", "cliente"] as const satisfies readonly MemberRole[];
 
 export type MemberView = {
   user_id: string;
@@ -18,6 +19,11 @@ export type MemberView = {
   role: MemberRole;
   created_at: string;
 };
+
+/** Equipe = todos menos o cliente. */
+export function isStaff(role: MemberRole | null | undefined): boolean {
+  return !!role && role !== "cliente";
+}
 
 export function isManager(role: MemberRole | null | undefined): boolean {
   return role === "owner" || role === "admin";
@@ -34,7 +40,7 @@ export function memberPermissions(actor: { userId: string; role: MemberRole }, t
   return {
     changeRole: manages && !self,
     /** Papéis que o actor pode atribuir ao alvo. */
-    assignableRoles: actor.role === "owner" ? [...MEMBER_ROLES] : (["admin", "advogado", "corretor"] as MemberRole[]),
+    assignableRoles: actor.role === "owner" ? [...MEMBER_ROLES] : (["admin", "advogado", "corretor", "cliente"] as MemberRole[]),
     remove: manages && !self,
     leave: self && target.role !== "owner",
   };

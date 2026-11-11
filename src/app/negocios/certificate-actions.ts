@@ -8,6 +8,7 @@ import { subjectFromRows } from "@/lib/certidoes/subject";
 import { computeValidity, todaySaoPaulo } from "@/lib/checklist/validity";
 import { assetLabel, partyLabel } from "@/lib/checklist/build";
 import { loadDeal } from "@/lib/deals/load";
+import { syncStage } from "@/lib/deals/stage";
 import { buildStoragePath, DOCUMENTS_BUCKET } from "@/lib/documents";
 import { formatBRL } from "@/lib/domain";
 import { createClient, getCurrentUserId } from "@/lib/supabase/server";
@@ -153,6 +154,7 @@ export async function runPreviews(dealId: string, refresh = false): Promise<Cert
     });
   }
 
+  await syncStage(supabase, dealId);
   revalidatePath(`/negocios/${dealId}`);
   if (!done && !failed.length) {
     return skipped.length
@@ -239,6 +241,7 @@ export async function requestIssuance(dealId: string): Promise<CertificateState>
     totalCents += r.costCents ?? 0;
   });
 
+  await syncStage(supabase, dealId);
   revalidatePath(`/negocios/${dealId}`);
   if (!requested) {
     if (failed.length) return { error: `Não foi possível pedir as certidões. ${failed.slice(0, 3).join(" ")}` };
@@ -301,6 +304,7 @@ export async function checkIssuance(dealId: string): Promise<CertificateState> {
     }
   });
 
+  await syncStage(supabase, dealId);
   revalidatePath(`/negocios/${dealId}`);
   const parts = [`${received} ${received === 1 ? "certidão recebida" : "certidões recebidas"}`];
   if (waiting) parts.push(`${waiting} aguardando pagamento ou emissão`);

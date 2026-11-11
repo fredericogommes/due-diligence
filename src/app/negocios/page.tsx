@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
 import { ButtonLink } from "@/components/ui";
@@ -37,6 +38,9 @@ async function DealList() {
 
   if (error) return <p className="text-sm text-danger">Não foi possível carregar os negócios.</p>;
   if (!orgs?.length) {
+    // Cliente (sem papel de equipe) acompanha pelas solicitações dele.
+    const { data: clientOrgs } = await supabase.rpc("my_client_orgs");
+    if ((clientOrgs as unknown[] | null)?.length) redirect("/minhas-solicitacoes");
     return (
       <p className="rounded-xl border border-line bg-surface p-6 text-sm text-subtle">
         Crie uma organização em <Link href="/" className="text-brand underline">Organizações</Link> antes de cadastrar negócios.
