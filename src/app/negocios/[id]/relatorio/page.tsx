@@ -5,8 +5,11 @@ import { Suspense } from "react";
 import { todaySaoPaulo } from "@/lib/checklist/validity";
 import { loadDeal } from "@/lib/deals/load";
 import { buildReport } from "@/lib/report/build";
-import { createClient } from "@/lib/supabase/server";
+import { formatDateTime } from "@/lib/audit";
+import { canSignReports, type MemberRole } from "@/lib/members";
+import { createClient, getCurrentUserId } from "@/lib/supabase/server";
 import { OpinionEditor, type OpinionData } from "./opinion-editor";
+import { VersionsPanel, type VersionItem } from "./versions-panel";
 import { PrintButton } from "./print-button";
 import { ReportDocument } from "./report-document";
 
@@ -25,11 +28,34 @@ async function Report({ params }: { params: PageProps<"/negocios/[id]/relatorio"
   const data = await loadDeal(id);
   if (!data) notFound();
   const supabase = await createClient();
-  const { data: opinion } = await supabase
-    .from("deal_opinions")
-    .select("conclusion, opinion, signer_name, signer_registration")
-    .eq("deal_id", id)
-    .maybeSingle<OpinionData>();
+  const userId = await getCurrentUserId();
+  const [{ data: opinion }, { data: versions }, { data: membership }, { data: profiles }] = await Promise.all([
+    supabase
+      .from("deal_opinions")
+      .select("conclusion, opinion, signer_name, signer_registration")
+      .eq("deal_id", id)
+      .maybeSingle<OpinionData>(),
+    supabase
+      .from("report_versions")
+      .select("id, version, status, conclusion, created_by, created_at, reviewed_by, reviewed_at, signed_by, signed_at")
+      .eq("deal_id", id)
+      .order("version", { ascending: false })
+      .returns<VersionRow[]>(),
+    supabase.from("memberships").select("role").eq("org_id", data.deal.org_id).eq("user_id", userId ?? "").maybeSingle<{ role: MemberRole }>(),
+    supabase.from("profiles").select("id, full_name").returns<{ id: string; full_name: string | null }[]>(),
+  ]);
+  const names = new Map((profiles ?? []).map((p) => [p.id, p.full_name ?? "Sem nome"]));
+  const who = (uid: string | null) => (uid ? (names.get(uid) ?? "ex-membro") : "—");
+  const versionItems: VersionItem[] = (versions ?? []).map((v) => ({
+    id: v.id,
+    version: v.version,
+    status: v.status,
+    conclusion: v.conclusion,
+    createdBy: who(v.created_by),
+    createdLabel: formatDateTime(v.created_at),
+    reviewedLabel: v.reviewed_at ? `por ${who(v.reviewed_by)} em ${formatDateTime(v.reviewed_at)}` : null,
+    signedLabel: v.signed_at ? `por ${who(v.signed_by)} em ${formatDateTime(v.signed_at)}` : null,
+  }));
 
   const report = buildReport(data, todaySaoPaulo());
   const conclusion = opinion?.conclusion ?? report.suggestedConclusion;
@@ -45,7 +71,21 @@ async function Report({ params }: { params: PageProps<"/negocios/[id]/relatorio"
         <OpinionEditor dealId={id} suggested={report.suggestedConclusion} opinion={opinion ?? null} />
       </div>
 
+      <div className="mb-6 print:hidden">
+        <VersionsPanel dealId={id} versions={versionItems} canSign={canSignReports(membership?.role)} />
+      </div>
+
+      <p className="mb-2 text-xs text-subtle print:hidden">Abaixo, o relatório com os dados de agora (ainda não congelado numa versão).</p>
       <ReportDocument report={report} conclusion={conclusion} opinion={opinion ?? null} />
     </div>
   );
 }
+
+type VersionRow = Omit<VersionItem, "createdBy" | "createdLabel" | "reviewedLabel" | "signedLabel"> & {
+  created_by: string | null;
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  signed_by: string | null;
+  signed_at: string | null;
+};

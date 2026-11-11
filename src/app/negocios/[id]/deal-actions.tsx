@@ -26,6 +26,7 @@ export function DealActions({ dealId, status }: { dealId: string; status: DealSt
           {DEAL_STATUSES.map((s) => <option key={s} value={s}>{DEAL_STATUS_LABEL[s]}</option>)}
         </select>
         <a href={`/negocios/${dealId}/relatorio`} className={buttonClass("primary")}>Relatório preliminar</a>
+        <a href={`/negocios/${dealId}/historico`} className={buttonClass("secondary")}>Histórico</a>
         <button
           type="button"
           disabled={pending}

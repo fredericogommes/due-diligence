@@ -30,15 +30,15 @@
 
 | Item | Estado |
 |---|---|
-| Código das etapas M0–M5 | **Pronto e commitado** (6 commits, branch `main`, sem remoto) |
-| Testes automáticos | **94 passando** (`npm test`), além de typecheck, lint e build sem erros |
+| Código das etapas M0–M6 | **Pronto e commitado** (branch `main`, sem remoto) |
+| Testes automáticos | **122 passando** (`npm test`), além de typecheck, lint e build sem erros |
 | Banco Supabase real | **Não existe ainda.** As migrações só rodaram no PGlite (Postgres em memória) dentro dos testes |
 | Login, cadastro, upload e IA no navegador | **Nunca testados de ponta a ponta**, porque dependem do Supabase real |
 | Tela verificada no navegador | `/demo/relatorio` (relatório com dados fictícios, só em desenvolvimento) e o redirecionamento para `/login` |
 | Leitura por IA | Implementada e testada com dublê. **Nunca chamou a API real** (falta `ANTHROPIC_API_KEY`) |
 | Certidões online (ONR) | Arquitetura pronta; o provedor fica **desativado de propósito** até chegarem a chave e a documentação oficial |
 | Deploy (Vercel) | **Não feito** |
-| GitHub / CI | **Não feito** (repositório só local) |
+| GitHub / CI | Workflow pronto em `.github/workflows/ci.yml` (lint, typecheck, testes, build, gitleaks). **Falta criar o repositório** e enviar o código |
 
 `.env.local` existe, mas tem apenas os **valores de exemplo** (`https://SEU-PROJETO...`). Ele não vai no backup e não está no Git.
 
@@ -101,15 +101,17 @@ O dono respondeu "Sim, siga" às suposições propostas. Daí saíram estas deci
 | M2 | `1240051` | Upload para o Storage (`<org>/<negócio>/<uuid>-arquivo`, até 20 MB, PDF/imagem). Liga o arquivo ao item, calcula a validade e trata documentos fora do checklist |
 | M3 | `287d785` | "Ler com IA": tipo, emissor, datas, resultado, ônus e divergências. Gera riscos (`findings`) com gravidade e permite riscos manuais |
 | M4 | `f53fccf` | Relatório no formato do parecer TETTU, conclusão sugerida, parecer editável (`deal_opinions`) e impressão em A4 |
+| M6 | (ver git log) | Gestão de membros (convites pelo e-mail da pessoa, troca de papel, remoção, sair), log de auditoria (`audit_log`, só nomes dos campos alterados, sem valores) e versões do relatório (`report_versions`: rascunho → revisado → assinado, conteúdo congelado em `snapshot`) |
 | M5 | `cfa7daa` | Pedidos de certidão (`certificate_requests`) com protocolo e consulta. Provedores: ONR (desativado, mostra o motivo) e simulado (PDF fictício, desligado em produção) |
 
 ## 5. Mapa do código
 
 ```
-supabase/migrations/      7 migrações, aplicar EM ORDEM (m0 → m5)
+supabase/migrations/      8 migrações, aplicar EM ORDEM (m0 → m6)
 src/proxy.ts              proteção otimista das rotas (redireciona para /login)
 src/app/                  login, auth/confirm, página inicial (organizações)
-src/app/negocios/         lista, novo, [id] (detalhe) e [id]/relatorio; *-actions.ts = Server Actions
+src/app/negocios/         lista, novo, [id] (detalhe), [id]/historico, [id]/relatorio e [id]/relatorio/versoes/[n]; *-actions.ts = Server Actions
+src/app/organizacoes/     [id] = membros, convites e histórico da organização
 src/app/demo/relatorio    relatório fictício (fora de produção)
 src/lib/checklist/        montagem do checklist (build.ts) e validade (validity.ts)
 src/lib/analysis/         schema zod da extração, chamada à IA, geração de riscos
@@ -124,6 +126,7 @@ tests/                    unitários; tests/db = banco e RLS sobre as migraçõe
 - `profiles`, `organizations`, `memberships`
 - `checklist_templates`, `template_items`
 - `deals`, `parties`, `assets`, `deal_items`, `documents`, `document_analyses`, `findings`, `deal_opinions`, `certificate_requests`
+- `invitations`, `report_versions`, `audit_log` (M6)
 - **Herança de organização:** o `org_id` das tabelas filhas é herdado do negócio por trigger e nunca vem do cliente.
 
 ## 6. O que falta para concluir
@@ -134,7 +137,7 @@ tests/                    unitários; tests/db = banco e RLS sobre as migraçõe
    - Preencher o `.env.local` (`.env.example` mostra os campos).
    - Cadastrar `http://localhost:3100/auth/confirm` em Authentication → URL Configuration.
 2. **`ANTHROPIC_API_KEY`** para ligar a leitura por IA. Registrar a base legal de LGPD, porque os documentos vão para a API da Anthropic.
-3. **Chave e documentação da API do registrodeimoveis.org.br.** Perguntar se a API emite certidão de matrícula ou só calcula emolumentos.
+3. **Chave e documentação da API do registrodeimoveis.org.br.** O texto do pedido está pronto em [`PEDIDO_CHAVE_REGISTRO_IMOVEIS.md`](PEDIDO_CHAVE_REGISTRO_IMOVEIS.md).
 
 ### B. Trabalho técnico que vem logo depois do Supabase
 1. **Teste de ponta a ponta no navegador com o Supabase real.** O roteiro:
@@ -156,9 +159,9 @@ tests/                    unitários; tests/db = banco e RLS sobre as migraçõe
 3. **GitHub privado + CI** (lint, typecheck, test, build) e varredura de segredos.
 
 ### C. Funcionalidades que ainda não existem
-- **Gestão de membros:** hoje só se cria a organização, onde o criador vira dono. Não há tela para convidar ou remover membros nem para trocar papéis. O banco já tem `memberships` e as políticas por papel.
-- **Log de auditoria** (`audit_log`: quem fez o quê e quando). Estava no modelo de dados proposto, mas não foi implementado.
-- **Versões do relatório** (rascunho → revisado → assinado, com PDF guardado). Hoje há um único parecer editável por negócio (`deal_opinions`), e o PDF sai pela impressão do navegador.
+- **Convite por e-mail automático:** hoje o convite fica no sistema e o dono avisa a pessoa; não há envio de e-mail (precisaria de um serviço como Resend ou do `inviteUserByEmail` com chave de serviço).
+- **PDF assinado guardado na versão:** cada versão congela o conteúdo e imprime sempre igual, mas o PDF com assinatura digital (ICP-Brasil) não é anexado à versão.
+- **Retenção do log de auditoria:** o log cresce sem limite; definir prazo de guarda junto com a política de LGPD.
 - **Provedor ONR real** (`registroImoveisProvider.request`/`poll` em `src/lib/certidoes/providers.ts`), depois da documentação oficial.
 - **Outro provedor** (ex.: Infosimples), se o dono escolher esse caminho.
 - **Identidade visual** definitiva (ver as perguntas em aberto).

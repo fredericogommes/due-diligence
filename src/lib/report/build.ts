@@ -60,6 +60,13 @@ export type ReportModel = {
   recommendations: string[];
 };
 
+/** O que uma versão do relatório guarda (congelado no momento em que foi salva). */
+export type ReportSnapshot = {
+  report: ReportModel;
+  conclusion: Conclusion;
+  opinion: { conclusion: Conclusion | null; opinion: string | null; signer_name: string | null; signer_registration: string | null } | null;
+};
+
 export type ReportInput = {
   deal: DealRow;
   orgName: string;
