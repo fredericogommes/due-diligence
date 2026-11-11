@@ -5,6 +5,7 @@ import { inputClass } from "@/components/ui";
 import type { ChecklistEntry, ChecklistSection, ChecklistSummary } from "@/lib/checklist/build";
 import { ITEM_STATUS_LABEL, ITEM_STATUSES, type ItemStatus } from "@/lib/domain";
 import { updateItem } from "../actions";
+import { DocumentList, DocumentUploader, type ItemOption } from "./documents";
 
 export const STATUS_STYLE: Record<ItemStatus, string> = {
   completo: "bg-ok/15 text-ok border-ok/30",
@@ -14,11 +15,12 @@ export const STATUS_STYLE: Record<ItemStatus, string> = {
 };
 
 export function ChecklistView({
-  dealId, sections, summary,
+  dealId, sections, summary, itemOptions,
 }: {
   dealId: string;
   sections: ChecklistSection[];
   summary: ChecklistSummary;
+  itemOptions: ItemOption[];
 }) {
   const [filter, setFilter] = useState<ItemStatus | "todos">("todos");
 
@@ -32,6 +34,11 @@ export function ChecklistView({
               ? "Os itens aparecem conforme você cadastra bens e partes."
               : `${summary.completo} completos · ${summary.parcial} parciais · ${summary.faltante} faltantes · ${summary.dispensado} dispensados`}
           </p>
+          {summary.vencidos > 0 && (
+            <p className="text-sm font-semibold text-danger">
+              {summary.vencidos} {summary.vencidos === 1 ? "item marcado como atendido tem" : "itens marcados como atendidos têm"} documento vencido.
+            </p>
+          )}
         </div>
         {summary.total > 0 && (
           <div className="flex flex-wrap gap-1 text-xs" role="group" aria-label="Filtrar por status">
@@ -58,7 +65,7 @@ export function ChecklistView({
             <div key={sec.name}>
               <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand">{sec.name}</h3>
               <ul className="divide-y divide-line rounded-lg border border-line">
-                {entries.map((e) => <ItemRow key={e.id} dealId={dealId} entry={e} />)}
+                {entries.map((e) => <ItemRow key={e.id} dealId={dealId} entry={e} itemOptions={itemOptions} />)}
               </ul>
             </div>
           );
@@ -68,7 +75,8 @@ export function ChecklistView({
   );
 }
 
-function ItemRow({ dealId, entry }: { dealId: string; entry: ChecklistEntry }) {
+function ItemRow({ dealId, entry, itemOptions }: { dealId: string; entry: ChecklistEntry; itemOptions: ItemOption[] }) {
+  const [attaching, setAttaching] = useState(false);
   const [status, setStatus] = useState<ItemStatus>(entry.status);
   const [notes, setNotes] = useState(entry.notes ?? "");
   const [pending, start] = useTransition();
@@ -102,6 +110,14 @@ function ItemRow({ dealId, entry }: { dealId: string; entry: ChecklistEntry }) {
           maxLength={2000}
           className={`${inputClass} mt-2 resize-y text-xs`}
         />
+        {entry.expiredWarning && (
+          <p className="mt-1 text-xs font-semibold text-danger">Atenção: o documento deste item está vencido — peça uma certidão atualizada.</p>
+        )}
+        <DocumentList dealId={dealId} docs={entry.documents} itemOptions={itemOptions} />
+        <button type="button" className="mt-2 text-xs font-semibold text-brand hover:underline" onClick={() => setAttaching((a) => !a)}>
+          {attaching ? "Cancelar" : entry.documents.length ? "+ Anexar outro documento" : "+ Anexar documento"}
+        </button>
+        {attaching && <DocumentUploader dealId={dealId} itemId={entry.id} onDone={() => setAttaching(false)} />}
         {error && <p className="mt-1 text-xs text-danger" role="alert">{error}</p>}
       </div>
       <div>

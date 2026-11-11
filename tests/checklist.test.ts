@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildChecklist, summarize } from "@/lib/checklist/build";
+import { buildChecklist, summarize, unassignedDocuments } from "@/lib/checklist/build";
 import type { DealItemRow, TemplateItemRow } from "@/lib/db-types";
 
 const t = (id: string, code: string, section: string, sort: number, scope: TemplateItemRow["scope"] = "negocio"): TemplateItemRow => ({
@@ -41,6 +41,35 @@ describe("buildChecklist", () => {
 
   it("ignora item cujo modelo não foi carregado e resume por status", () => {
     const s = summarize(buildChecklist(items, templates, parties, assets));
-    expect(s).toEqual({ faltante: 2, parcial: 1, completo: 1, dispensado: 0, total: 4, considered: 4 });
+    expect(s).toEqual({ faltante: 2, parcial: 1, completo: 1, dispensado: 0, total: 4, considered: 4, vencidos: 0 });
+  });
+});
+
+describe("documentos no checklist", () => {
+  const templates = [{ ...t("t1", "VPF-03", "Vendedor", 10, "parte_pf"), validity_days: 180 }];
+  const doc = (id: string, item: string | null, issued: string | null, expires: string | null) => ({
+    id, org_id: "o", deal_id: "d", deal_item_id: item, storage_path: `o/d/${id}`, file_name: `${id}.pdf`,
+    mime_type: "application/pdf", size_bytes: 1, sha256: null, doc_type: null, issuer: null,
+    issued_at: issued, expires_at: expires, result: "negativa" as const, source: "upload" as const, notes: null, created_at: "",
+  });
+
+  it("anexa documentos ao item, calcula validade e avisa item completo com tudo vencido", () => {
+    const items = [i("i1", "t1", "completo", "p1"), i("i2", "t1", "completo", "p2")];
+    const parties = [{ id: "p1", name: "A", role: "vendedor" as const }, { id: "p2", name: "B", role: "vendedor" as const }];
+    const docs = [
+      doc("d1", "i1", "2026-01-01", null), // 180 dias → 2026-06-30, vencida
+      doc("d2", "i2", "2026-01-01", null),
+      doc("d3", "i2", "2026-10-01", null), // válida até 2027-03-30
+      doc("d4", null, null, null),
+    ];
+    const sections = buildChecklist(items, templates, parties, [], docs, "2026-11-11");
+    const [a, b] = sections[0].entries;
+    expect(a.validity).toBe("vencida");
+    expect(a.expiredWarning).toBe(true);
+    expect(b.documents.map((d) => d.id)).toEqual(["d2", "d3"]);
+    expect(b.validity).toBe("valida");
+    expect(b.expiredWarning).toBe(false);
+    expect(summarize(sections).vencidos).toBe(1);
+    expect(unassignedDocuments(docs, "2026-11-11").map((d) => d.id)).toEqual(["d4"]);
   });
 });

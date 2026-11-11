@@ -3,8 +3,11 @@
  * junta item do negócio + item do modelo + parte/bem, ordena e agrupa por seção.
  * Função pura — testada em tests/checklist.test.ts.
  */
-import type { AssetRow, DealItemRow, PartyRow, TemplateItemRow } from "@/lib/db-types";
+import type { AssetRow, DealItemRow, DocumentRow, PartyRow, TemplateItemRow } from "@/lib/db-types";
 import { ASSET_KIND_LABEL, PARTY_ROLE_LABEL, type ItemStatus } from "@/lib/domain";
+import { bestValidity, computeValidity, type Validity, type ValidityState } from "./validity";
+
+export type DocView = DocumentRow & { validity: Validity };
 
 export type ChecklistEntry = {
   id: string;
@@ -21,11 +24,16 @@ export type ChecklistEntry = {
   partyId: string | null;
   assetId: string | null;
   sortOrder: number;
+  documents: DocView[];
+  /** Melhor validade entre os documentos do item (basta um válido). null = sem documento. */
+  validity: ValidityState | null;
+  /** Item marcado como completo/parcial cujos documentos estão todos vencidos. */
+  expiredWarning: boolean;
 };
 
 export type ChecklistSection = { name: string; entries: ChecklistEntry[] };
 
-export type ChecklistSummary = Record<ItemStatus, number> & { total: number; considered: number };
+export type ChecklistSummary = Record<ItemStatus, number> & { total: number; considered: number; vencidos: number };
 
 export function partyLabel(p: Pick<PartyRow, "name" | "role">): string {
   return `${p.name} — ${PARTY_ROLE_LABEL[p.role]}`;
@@ -40,8 +48,15 @@ export function buildChecklist(
   templateItems: TemplateItemRow[],
   parties: Pick<PartyRow, "id" | "name" | "role">[],
   assets: Pick<AssetRow, "id" | "description" | "kind">[],
+  documents: DocumentRow[] = [],
+  today = "1970-01-01",
 ): ChecklistSection[] {
   const tpl = new Map(templateItems.map((t) => [t.id, t]));
+  const docsByItem = new Map<string, DocumentRow[]>();
+  for (const d of documents) {
+    if (!d.deal_item_id) continue;
+    docsByItem.set(d.deal_item_id, [...(docsByItem.get(d.deal_item_id) ?? []), d]);
+  }
   const party = new Map(parties.map((p) => [p.id, p]));
   const asset = new Map(assets.map((a) => [a.id, a]));
 
@@ -51,6 +66,11 @@ export function buildChecklist(
     if (!t) continue;
     const p = it.party_id ? party.get(it.party_id) : undefined;
     const a = it.asset_id ? asset.get(it.asset_id) : undefined;
+    const docs: DocView[] = (docsByItem.get(it.id) ?? []).map((d) => ({
+      ...d,
+      validity: computeValidity(d, t.validity_days, today),
+    }));
+    const validity = bestValidity(docs.map((d) => d.validity.state));
     entries.push({
       id: it.id,
       code: t.code,
@@ -65,6 +85,9 @@ export function buildChecklist(
       partyId: it.party_id,
       assetId: it.asset_id,
       sortOrder: t.sort_order,
+      documents: docs,
+      validity,
+      expiredWarning: validity === "vencida" && (it.status === "completo" || it.status === "parcial"),
     });
   }
 
@@ -89,13 +112,21 @@ export function buildChecklist(
 
 /** Contagem por status. "considered" exclui os dispensados. */
 export function summarize(sections: ChecklistSection[]): ChecklistSummary {
-  const s: ChecklistSummary = { faltante: 0, parcial: 0, completo: 0, dispensado: 0, total: 0, considered: 0 };
+  const s: ChecklistSummary = { faltante: 0, parcial: 0, completo: 0, dispensado: 0, total: 0, considered: 0, vencidos: 0 };
   for (const sec of sections) {
     for (const e of sec.entries) {
       s[e.status]++;
       s.total++;
+      if (e.expiredWarning) s.vencidos++;
     }
   }
   s.considered = s.total - s.dispensado;
   return s;
+}
+
+/** Documentos que não estão ligados a nenhum item ("fora do checklist"). */
+export function unassignedDocuments(documents: DocumentRow[], today: string): DocView[] {
+  return documents
+    .filter((d) => !d.deal_item_id)
+    .map((d) => ({ ...d, validity: computeValidity(d, null, today) }));
 }

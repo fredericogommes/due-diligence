@@ -22,6 +22,21 @@ const SUPABASE_STUB = `
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
   grant execute on function auth.uid() to anon, authenticated;
+
+  create schema storage;
+  grant usage on schema storage to anon, authenticated;
+  create table storage.buckets (
+    id text primary key, name text, public boolean,
+    file_size_limit bigint, allowed_mime_types text[]
+  );
+  create table storage.objects (
+    id uuid primary key default gen_random_uuid(),
+    bucket_id text references storage.buckets (id),
+    name text,
+    owner uuid default auth.uid()
+  );
+  alter table storage.objects enable row level security;
+  grant select, insert, update, delete on storage.objects to authenticated;
 `;
 
 const MIGRATIONS_DIR = join(__dirname, "..", "..", "supabase", "migrations");
@@ -51,14 +66,14 @@ export async function createUser(db: PGlite, id: string, fullName = "Usuário"):
 export async function asUser<T>(
   db: PGlite,
   userId: string | null,
-  fn: (q: <R = Record<string, unknown>>(sql: string, params?: unknown[]) => Promise<R[]>) => Promise<T>,
+  fn: (q: <R = Record<string, unknown>>(sql: string, params?: readonly unknown[]) => Promise<R[]>) => Promise<T>,
   { commit = false }: { commit?: boolean } = {},
 ): Promise<T> {
   await db.exec("begin");
   try {
     await db.query("select set_config('request.jwt.claim.sub', $1, true)", [userId ?? ""]);
     await db.exec(`set local role ${userId ? "authenticated" : "anon"}`);
-    const result = await fn(async (sql, params) => (await db.query(sql, params)).rows as never);
+    const result = await fn(async (sql, params) => (await db.query(sql, params ? [...params] : undefined)).rows as never);
     await db.exec(commit ? "commit" : "rollback");
     return result;
   } catch (err) {

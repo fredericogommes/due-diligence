@@ -76,3 +76,23 @@ export type DealProgressRow = {
   faltantes: number;
   dispensados: number;
 };
+
+export type DocumentRow = {
+  id: string;
+  org_id: string;
+  deal_id: string;
+  deal_item_id: string | null;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  sha256: string | null;
+  doc_type: string | null;
+  issuer: string | null;
+  issued_at: string | null;
+  expires_at: string | null;
+  result: import("./documents").DocResult;
+  source: "upload" | "api";
+  notes: string | null;
+  created_at: string;
+};

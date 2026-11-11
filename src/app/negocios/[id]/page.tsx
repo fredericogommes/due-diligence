@@ -3,12 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
-import { buildChecklist, summarize } from "@/lib/checklist/build";
+import { buildChecklist, summarize, unassignedDocuments } from "@/lib/checklist/build";
+import { todaySaoPaulo } from "@/lib/checklist/validity";
 import { loadDeal } from "@/lib/deals/load";
 import { DEAL_KIND_LABEL, formatBRL, formatDate } from "@/lib/domain";
 import { AssetsSection } from "./assets-section";
 import { ChecklistView } from "./checklist-view";
 import { DealActions } from "./deal-actions";
+import { ExtraDocuments } from "./extra-documents";
 import { PartiesSection } from "./parties-section";
 
 export const metadata: Metadata = { title: "Negócio · Due Diligence" };
@@ -31,9 +33,13 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
   const { id } = await params;
   const data = await loadDeal(id);
   if (!data) notFound();
-  const { deal, parties, assets, items, templateItems, orgName } = data;
-  const sections = buildChecklist(items, templateItems, parties, assets);
+  const { deal, parties, assets, items, templateItems, orgName, documents } = data;
+  const today = todaySaoPaulo();
+  const sections = buildChecklist(items, templateItems, parties, assets, documents, today);
   const summary = summarize(sections);
+  const itemOptions = sections.flatMap((s) =>
+    s.entries.map((e) => ({ id: e.id, label: `${e.code} · ${e.title}${e.subject ? ` (${e.subject})` : ""}` })),
+  );
 
   return (
     <div className="mt-2 space-y-8">
@@ -53,7 +59,9 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
         <PartiesSection dealId={deal.id} dealKind={deal.kind} parties={parties} />
       </div>
 
-      <ChecklistView dealId={deal.id} sections={sections} summary={summary} />
+      <ChecklistView dealId={deal.id} sections={sections} summary={summary} itemOptions={itemOptions} />
+
+      <ExtraDocuments dealId={deal.id} docs={unassignedDocuments(documents, today)} itemOptions={itemOptions} />
     </div>
   );
 }

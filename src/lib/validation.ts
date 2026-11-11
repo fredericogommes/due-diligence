@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   ASSET_KINDS, DEAL_KINDS, ITEM_STATUSES, MARITAL_STATUSES, PARTY_KINDS, PARTY_ROLES, PROPERTY_REGIMES, UFS,
 } from "./domain";
+import { ALLOWED_MIME, DOC_RESULTS, MAX_DOCUMENT_BYTES } from "./documents";
 
 /** Remove pontuação de CPF/CNPJ. */
 export function onlyDigits(value: string): string {
@@ -155,6 +156,39 @@ export const itemUpdateSchema = z.object({
   status: z.enum(ITEM_STATUSES),
   notes: optionalText(2000),
 });
+
+const optionalDate = z.preprocess(
+  (v) => (v === "" || v === null ? undefined : v),
+  z.iso.date("Data inválida.").optional(),
+);
+
+/** Metadados de um documento (o que o usuário informa ou a IA extrai). */
+export const documentMetaSchema = z
+  .object({
+    dealItemId: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.uuid().optional()),
+    docType: optionalText(200),
+    issuer: optionalText(200),
+    issuedAt: optionalDate,
+    expiresAt: optionalDate,
+    result: z.enum(DOC_RESULTS).default("indeterminado"),
+    notes: optionalText(2000),
+  })
+  .refine((d) => !d.issuedAt || !d.expiresAt || d.expiresAt >= d.issuedAt, {
+    path: ["expiresAt"],
+    message: "A validade não pode ser anterior à emissão.",
+  });
+
+export const registerDocumentSchema = z.intersection(
+  documentMetaSchema,
+  z.object({
+    dealId: z.uuid(),
+    path: z.string().min(10).max(500),
+    fileName: z.string().trim().min(1).max(255),
+    mimeType: z.enum(ALLOWED_MIME, "Tipo de arquivo não aceito (use PDF, JPG, PNG ou WEBP)."),
+    sizeBytes: z.number().int().positive().max(MAX_DOCUMENT_BYTES, "Arquivo maior que 20 MB."),
+    sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  }),
+);
 
 /** Converte FormData em objeto simples (só campos de texto). */
 export function formToObject(form: FormData): Record<string, string> {
