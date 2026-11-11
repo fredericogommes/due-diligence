@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { signOut } from "./login/actions";
+import { AppHeader } from "@/components/app-header";
 import { OrgForm } from "./org-form";
 import { createClient, getCurrentUserId } from "@/lib/supabase/server";
 
@@ -40,16 +40,13 @@ async function Home() {
   ]);
 
   return (
+    <>
+    <AppHeader current="organizacoes" />
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-      <header className="mb-8 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">Due Diligence</h1>
-          <p className="text-sm text-subtle">Olá, {profile?.full_name ?? "bem-vindo"}.</p>
-        </div>
-        <form action={signOut}>
-          <button className="rounded-md border border-line px-3 py-1.5 text-sm hover:bg-muted">Sair</button>
-        </form>
-      </header>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-ink">Organizações</h1>
+        <p className="text-sm text-subtle">Olá, {profile?.full_name ?? "bem-vindo"}.</p>
+      </div>
 
       <section className="rounded-xl border border-line bg-surface p-6">
         <h2 className="mb-4 text-lg font-semibold text-ink">Suas organizações</h2>
@@ -71,5 +68,6 @@ async function Home() {
         <OrgForm />
       </section>
     </main>
+    </>
   );
 }

@@ -13,6 +13,7 @@
   --brand-strong: #472f82;
   --danger: #c0262d;
   --ok: #1d7a46;
+  --warn: #b7791f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -28,6 +29,7 @@
     --brand-strong: #7a5bd0;
     --danger: #f06a70;
     --ok: #4cc584;
+    --warn: #e2b04a;
   }
 }
 
@@ -43,6 +45,7 @@
   --color-brand-strong: var(--brand-strong);
   --color-danger: var(--danger);
   --color-ok: var(--ok);
+  --color-warn: var(--warn);
   --font-sans: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
 }
 

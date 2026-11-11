@@ -24,7 +24,7 @@ export async function signIn(_prev: AuthState, form: FormData): Promise<AuthStat
       error: error.code === "email_not_confirmed" ? "Confirme seu e-mail antes de entrar." : "E-mail ou senha incorretos.",
     };
   }
-  redirect("/");
+  redirect("/negocios");
 }
 
 export async function signUp(_prev: AuthState, form: FormData): Promise<AuthState> {
@@ -48,7 +48,7 @@ export async function signUp(_prev: AuthState, form: FormData): Promise<AuthStat
 
   // Com confirmação de e-mail ligada no Supabase não há sessão ainda.
   if (!data.session) return { info: "Conta criada. Enviamos um link de confirmação para o seu e-mail." };
-  redirect("/");
+  redirect("/negocios");
 }
 
 export async function signOut(): Promise<void> {

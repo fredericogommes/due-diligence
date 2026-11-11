@@ -1,4 +1,7 @@
 import { z } from "zod";
+import {
+  ASSET_KINDS, DEAL_KINDS, ITEM_STATUSES, MARITAL_STATUSES, PARTY_KINDS, PARTY_ROLES, PROPERTY_REGIMES, UFS,
+} from "./domain";
 
 /** Remove pontuação de CPF/CNPJ. */
 export function onlyDigits(value: string): string {
@@ -42,6 +45,123 @@ export const organizationSchema = z.object({
     .refine((v) => v === "" || isValidCnpj(v), "CNPJ inválido.")
     .optional(),
 });
+
+/** Valida os dígitos verificadores de um CPF. */
+export function isValidCpf(raw: string): boolean {
+  const cpf = onlyDigits(raw);
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  const digit = (base: string) => {
+    let sum = 0;
+    for (let i = 0; i < base.length; i++) sum += Number(base[i]) * (base.length + 1 - i);
+    const rest = (sum * 10) % 11;
+    return rest === 10 ? 0 : rest;
+  };
+  const d1 = digit(cpf.slice(0, 9));
+  const d2 = digit(cpf.slice(0, 9) + d1);
+  return cpf.endsWith(`${d1}${d2}`);
+}
+
+/** Campo de texto opcional: string vazia vira undefined. */
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max, "Texto muito longo.")
+    .transform((v) => (v === "" ? undefined : v))
+    .optional();
+
+/** Enum opcional vindo de <select>: "" vira undefined. */
+const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.preprocess((v) => (v === "" || v === null ? undefined : v), z.enum(values).optional());
+
+export const dealSchema = z.object({
+  orgId: z.uuid("Escolha a organização."),
+  kind: z.enum(DEAL_KINDS, "Escolha o tipo de negócio."),
+  title: z.string().trim().min(2, "Dê um nome ao negócio.").max(200),
+  price: z
+    .string()
+    .trim()
+    .transform((v, ctx) => {
+      if (v === "") return undefined;
+      // aceita 1.234.567,89 ou 1234567.89
+      const n = Number(v.includes(",") ? v.replace(/\./g, "").replace(",", ".") : v);
+      if (!Number.isFinite(n) || n < 0) {
+        ctx.addIssue({ code: "custom", message: "Valor inválido." });
+        return z.NEVER;
+      }
+      return Math.round(n * 100) / 100;
+    })
+    .optional(),
+  notes: optionalText(5000),
+});
+
+export const partySchema = z
+  .object({
+    dealId: z.uuid(),
+    kind: z.enum(PARTY_KINDS, "Escolha PF ou PJ."),
+    role: z.enum(PARTY_ROLES, "Escolha o papel da parte."),
+    name: z.string().trim().min(2, "Informe o nome.").max(200),
+    document: z.string().trim().transform(onlyDigits).optional(),
+    maritalStatus: optionalEnum(MARITAL_STATUSES),
+    propertyRegime: optionalEnum(PROPERTY_REGIMES),
+    notes: optionalText(2000),
+  })
+  .superRefine((p, ctx) => {
+    if (p.document) {
+      const ok = p.kind === "pf" ? isValidCpf(p.document) : isValidCnpj(p.document);
+      if (!ok) ctx.addIssue({ code: "custom", path: ["document"], message: p.kind === "pf" ? "CPF inválido." : "CNPJ inválido." });
+    }
+    if (p.kind === "pj" && (p.maritalStatus || p.propertyRegime)) {
+      ctx.addIssue({ code: "custom", path: ["maritalStatus"], message: "Estado civil só se aplica a pessoa física." });
+    }
+    if (p.propertyRegime && p.maritalStatus !== "casado" && p.maritalStatus !== "uniao_estavel") {
+      ctx.addIssue({ code: "custom", path: ["propertyRegime"], message: "Regime de bens só para casado(a) ou união estável." });
+    }
+  })
+  .transform((p) => ({ ...p, document: p.document || undefined }));
+
+export const assetSchema = z
+  .object({
+    dealId: z.uuid(),
+    kind: z.enum(ASSET_KINDS, "Escolha o tipo de bem."),
+    description: z.string().trim().min(2, "Descreva o bem.").max(300),
+    matricula: optionalText(40),
+    cartorio: optionalText(200),
+    cns: z.string().trim().transform(onlyDigits).optional(),
+    inscricaoIptu: optionalText(60),
+    address: optionalText(300),
+    municipio: optionalText(120),
+    uf: optionalEnum(UFS),
+    cnpj: z.string().trim().transform(onlyDigits).optional(),
+  })
+  .superRefine((a, ctx) => {
+    if (a.cns && a.cns.length !== 6) ctx.addIssue({ code: "custom", path: ["cns"], message: "O CNS do cartório tem 6 dígitos." });
+    if (a.cnpj && !isValidCnpj(a.cnpj)) ctx.addIssue({ code: "custom", path: ["cnpj"], message: "CNPJ inválido." });
+  })
+  .transform((a) => {
+    const imovel = a.kind === "imovel";
+    return {
+      ...a,
+      matricula: imovel ? a.matricula : undefined,
+      cartorio: imovel ? a.cartorio : undefined,
+      cns: imovel && a.cns ? a.cns : undefined,
+      inscricaoIptu: imovel ? a.inscricaoIptu : undefined,
+      cnpj: !imovel && a.cnpj ? a.cnpj : undefined,
+    };
+  });
+
+export const itemUpdateSchema = z.object({
+  itemId: z.uuid(),
+  status: z.enum(ITEM_STATUSES),
+  notes: optionalText(2000),
+});
+
+/** Converte FormData em objeto simples (só campos de texto). */
+export function formToObject(form: FormData): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of form.entries()) if (typeof v === "string") out[k] = v;
+  return out;
+}
 
 /** Primeira mensagem de erro de uma validação, para mostrar no formulário. */
 export function firstError(error: z.ZodError): string {
