@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import type { DocView } from "@/lib/checklist/build";
-import { DocumentList, DocumentUploader, type ItemOption } from "./documents";
+import { DocumentList, DocumentUploader, type AiProps, type ItemOption } from "./documents";
 
 /** Documentos que não correspondem a item do checklist (como a seção 9 do parecer TETTU). */
-export function ExtraDocuments({ dealId, docs, itemOptions }: { dealId: string; docs: DocView[]; itemOptions: ItemOption[] }) {
+export function ExtraDocuments({ dealId, docs, itemOptions, ai }: { dealId: string; docs: DocView[]; itemOptions: ItemOption[]; ai: AiProps }) {
   const [adding, setAdding] = useState(false);
   return (
     <section className="rounded-xl border border-line bg-surface p-5">
@@ -20,7 +20,7 @@ export function ExtraDocuments({ dealId, docs, itemOptions }: { dealId: string; 
       </div>
       {adding && <DocumentUploader dealId={dealId} onDone={() => setAdding(false)} />}
       {docs.length === 0 && !adding && <p className="mt-3 text-sm text-subtle">Nenhum.</p>}
-      <DocumentList dealId={dealId} docs={docs} itemOptions={itemOptions} />
+      <DocumentList dealId={dealId} docs={docs} itemOptions={itemOptions} ai={ai} />
     </section>
   );
 }

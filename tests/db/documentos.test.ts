@@ -82,3 +82,28 @@ describe("storage", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("análises e apontamentos", () => {
+  it("registra análise e apontamento do mesmo negócio; recusa referência cruzada", async () => {
+    await asUser(db, ANA, async (q) => {
+      const [d] = await q<{ id: string }>(...doc(`${orgA}/${dealA}/an.pdf`, itemA));
+      const [a] = await q<{ id: string }>(
+        "insert into public.document_analyses (deal_id, document_id, status) values ($1, $2, 'concluida') returning id",
+        [dealA, d.id],
+      );
+      await q(
+        "insert into public.findings (deal_id, document_id, deal_item_id, analysis_id, severity, title, source) values ($1, $2, $3, $4, 'alto', 'Hipoteca', 'ia')",
+        [dealA, d.id, itemA, a.id],
+      );
+      await expect(
+        q("insert into public.findings (deal_id, deal_item_id, severity, title) values ($1, $2, 'baixo', 'X1')", [dealA2, itemA]),
+      ).rejects.toThrow(/item de outro negócio/);
+    });
+  });
+
+  it("outra organização não vê análises nem apontamentos", async () => {
+    await asUser(db, ANA, (q) => q("insert into public.findings (deal_id, severity, title) values ($1, 'medio', 'Manual')", [dealA]), { commit: true });
+    expect(await asUser(db, CAIO, (q) => q("select id from public.findings"))).toHaveLength(0);
+    expect(await asUser(db, CAIO, (q) => q("select id from public.document_analyses"))).toHaveLength(0);
+  });
+});

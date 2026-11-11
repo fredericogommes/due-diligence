@@ -11,9 +11,13 @@ import { AssetsSection } from "./assets-section";
 import { ChecklistView } from "./checklist-view";
 import { DealActions } from "./deal-actions";
 import { ExtraDocuments } from "./extra-documents";
+import { FindingsSection } from "./findings-section";
 import { PartiesSection } from "./parties-section";
 
 export const metadata: Metadata = { title: "Negócio · Due Diligence" };
+
+/** A leitura por IA de um PDF grande pode levar mais de um minuto (Server Action desta página). */
+export const maxDuration = 300;
 
 export default function DealPage({ params }: PageProps<"/negocios/[id]">) {
   return (
@@ -33,7 +37,8 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
   const { id } = await params;
   const data = await loadDeal(id);
   if (!data) notFound();
-  const { deal, parties, assets, items, templateItems, orgName, documents } = data;
+  const { deal, parties, assets, items, templateItems, orgName, documents, latestAnalysis, findings } = data;
+  const ai = { analyses: latestAnalysis, aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY) };
   const today = todaySaoPaulo();
   const sections = buildChecklist(items, templateItems, parties, assets, documents, today);
   const summary = summarize(sections);
@@ -59,9 +64,11 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
         <PartiesSection dealId={deal.id} dealKind={deal.kind} parties={parties} />
       </div>
 
-      <ChecklistView dealId={deal.id} sections={sections} summary={summary} itemOptions={itemOptions} />
+      <FindingsSection dealId={deal.id} findings={findings} itemOptions={itemOptions} />
 
-      <ExtraDocuments dealId={deal.id} docs={unassignedDocuments(documents, today)} itemOptions={itemOptions} />
+      <ChecklistView dealId={deal.id} sections={sections} summary={summary} itemOptions={itemOptions} ai={ai} />
+
+      <ExtraDocuments dealId={deal.id} docs={unassignedDocuments(documents, today)} itemOptions={itemOptions} ai={ai} />
     </div>
   );
 }

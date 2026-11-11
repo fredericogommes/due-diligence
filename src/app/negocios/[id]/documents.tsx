@@ -10,7 +10,9 @@ import {
 } from "@/lib/documents";
 import { formatDate } from "@/lib/domain";
 import { createClient } from "@/lib/supabase/client";
+import type { AnalysisRow } from "@/lib/db-types";
 import { deleteDocument, getDocumentUrl, getUploadFolder, registerDocument, updateDocument } from "../document-actions";
+import { AnalysisPanel } from "./analysis-panel";
 
 export type ItemOption = { id: string; label: string };
 
@@ -125,16 +127,26 @@ export function DocumentUploader({ dealId, itemId, onDone }: { dealId: string; i
 }
 
 /** Lista de documentos com abrir, editar (metadados e item) e apagar. */
-export function DocumentList({ dealId, docs, itemOptions, extra }: {
+export type AiProps = { analyses: Record<string, AnalysisRow>; aiEnabled: boolean };
+
+export function DocumentList({ dealId, docs, itemOptions, ai }: {
   dealId: string;
   docs: DocView[];
   itemOptions?: ItemOption[];
-  extra?: (doc: DocView) => React.ReactNode;
+  ai: AiProps;
 }) {
   if (!docs.length) return null;
   return (
     <ul className="mt-2 space-y-2">
-      {docs.map((d) => <DocumentRowView key={d.id} dealId={dealId} doc={d} itemOptions={itemOptions} extra={extra?.(d)} />)}
+      {docs.map((d) => (
+        <DocumentRowView
+          key={d.id}
+          dealId={dealId}
+          doc={d}
+          itemOptions={itemOptions}
+          extra={<AnalysisPanel dealId={dealId} documentId={d.id} analysis={ai.analyses[d.id]} linkedToItem={Boolean(d.deal_item_id)} aiEnabled={ai.aiEnabled} />}
+        />
+      ))}
     </ul>
   );
 }

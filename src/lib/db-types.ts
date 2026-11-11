@@ -96,3 +96,33 @@ export type DocumentRow = {
   notes: string | null;
   created_at: string;
 };
+
+export type FindingSeverity = "critico" | "alto" | "medio" | "baixo";
+
+export type AnalysisRow = {
+  id: string;
+  deal_id: string;
+  document_id: string;
+  status: "pendente" | "concluida" | "erro";
+  model: string | null;
+  output: import("./analysis/schema").Extraction | null;
+  error: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  created_at: string;
+};
+
+export type FindingRow = {
+  id: string;
+  deal_id: string;
+  deal_item_id: string | null;
+  document_id: string | null;
+  analysis_id: string | null;
+  severity: FindingSeverity;
+  title: string;
+  description: string | null;
+  evidence: string | null;
+  source: "ia" | "manual";
+  resolved: boolean;
+  created_at: string;
+};
