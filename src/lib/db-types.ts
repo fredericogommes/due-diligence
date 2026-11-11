@@ -126,3 +126,16 @@ export type FindingRow = {
   resolved: boolean;
   created_at: string;
 };
+
+export type CertificateRequestRow = {
+  id: string;
+  deal_id: string;
+  deal_item_id: string;
+  provider: string;
+  status: "pendente" | "concluido" | "erro";
+  protocol: string | null;
+  cost_cents: number | null;
+  document_id: string | null;
+  error: string | null;
+  created_at: string;
+};

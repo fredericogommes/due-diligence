@@ -5,6 +5,7 @@ import { inputClass } from "@/components/ui";
 import type { ChecklistEntry, ChecklistSection, ChecklistSummary } from "@/lib/checklist/build";
 import { ITEM_STATUS_LABEL, ITEM_STATUSES, type ItemStatus } from "@/lib/domain";
 import { updateItem } from "../actions";
+import { CertificateRequest, type CertInfo } from "./certificate-request";
 import { DocumentList, DocumentUploader, type AiProps, type ItemOption } from "./documents";
 
 export const STATUS_STYLE: Record<ItemStatus, string> = {
@@ -15,13 +16,14 @@ export const STATUS_STYLE: Record<ItemStatus, string> = {
 };
 
 export function ChecklistView({
-  dealId, sections, summary, itemOptions, ai,
+  dealId, sections, summary, itemOptions, ai, certs,
 }: {
   dealId: string;
   sections: ChecklistSection[];
   summary: ChecklistSummary;
   itemOptions: ItemOption[];
   ai: AiProps;
+  certs: Record<string, CertInfo>;
 }) {
   const [filter, setFilter] = useState<ItemStatus | "todos">("todos");
 
@@ -66,7 +68,7 @@ export function ChecklistView({
             <div key={sec.name}>
               <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand">{sec.name}</h3>
               <ul className="divide-y divide-line rounded-lg border border-line">
-                {entries.map((e) => <ItemRow key={e.id} dealId={dealId} entry={e} itemOptions={itemOptions} ai={ai} />)}
+                {entries.map((e) => <ItemRow key={e.id} dealId={dealId} entry={e} itemOptions={itemOptions} ai={ai} cert={certs[e.id]} />)}
               </ul>
             </div>
           );
@@ -76,7 +78,7 @@ export function ChecklistView({
   );
 }
 
-function ItemRow({ dealId, entry, itemOptions, ai }: { dealId: string; entry: ChecklistEntry; itemOptions: ItemOption[]; ai: AiProps }) {
+function ItemRow({ dealId, entry, itemOptions, ai, cert }: { dealId: string; entry: ChecklistEntry; itemOptions: ItemOption[]; ai: AiProps; cert?: CertInfo }) {
   const [attaching, setAttaching] = useState(false);
   const [status, setStatus] = useState<ItemStatus>(entry.status);
   const [notes, setNotes] = useState(entry.notes ?? "");
@@ -118,6 +120,7 @@ function ItemRow({ dealId, entry, itemOptions, ai }: { dealId: string; entry: Ch
         <button type="button" className="mt-2 text-xs font-semibold text-brand hover:underline" onClick={() => setAttaching((a) => !a)}>
           {attaching ? "Cancelar" : entry.documents.length ? "+ Anexar outro documento" : "+ Anexar documento"}
         </button>
+        {cert && <CertificateRequest dealId={dealId} itemId={entry.id} info={cert} />}
         {attaching && <DocumentUploader dealId={dealId} itemId={entry.id} onDone={() => setAttaching(false)} />}
         {error && <p className="mt-1 text-xs text-danger" role="alert">{error}</p>}
       </div>

@@ -5,6 +5,9 @@ import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
 import { buildChecklist, summarize, unassignedDocuments } from "@/lib/checklist/build";
 import { todaySaoPaulo } from "@/lib/checklist/validity";
+import { providerOptions } from "@/lib/certidoes/providers";
+import { subjectFromRows } from "@/lib/certidoes/subject";
+import type { CertInfo } from "./certificate-request";
 import { loadDeal } from "@/lib/deals/load";
 import { DEAL_KIND_LABEL, formatBRL, formatDate } from "@/lib/domain";
 import { AssetsSection } from "./assets-section";
@@ -37,11 +40,21 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
   const { id } = await params;
   const data = await loadDeal(id);
   if (!data) notFound();
-  const { deal, parties, assets, items, templateItems, orgName, documents, latestAnalysis, findings } = data;
+  const { deal, parties, assets, items, templateItems, orgName, documents, latestAnalysis, findings, certRequests } = data;
   const ai = { analyses: latestAnalysis, aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY) };
   const today = todaySaoPaulo();
   const sections = buildChecklist(items, templateItems, parties, assets, documents, today);
   const summary = summarize(sections);
+  const tplById = new Map(templateItems.map((t) => [t.id, t]));
+  const certs: Record<string, CertInfo> = {};
+  for (const it of items) {
+    const t = tplById.get(it.template_item_id);
+    if (!t) continue;
+    certs[it.id] = {
+      options: providerOptions(subjectFromRows(it, t, parties, assets)),
+      requests: certRequests.filter((r) => r.deal_item_id === it.id),
+    };
+  }
   const itemOptions = sections.flatMap((s) =>
     s.entries.map((e) => ({ id: e.id, label: `${e.code} · ${e.title}${e.subject ? ` (${e.subject})` : ""}` })),
   );
@@ -66,7 +79,7 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
 
       <FindingsSection dealId={deal.id} findings={findings} itemOptions={itemOptions} />
 
-      <ChecklistView dealId={deal.id} sections={sections} summary={summary} itemOptions={itemOptions} ai={ai} />
+      <ChecklistView dealId={deal.id} sections={sections} summary={summary} itemOptions={itemOptions} ai={ai} certs={certs} />
 
       <ExtraDocuments dealId={deal.id} docs={unassignedDocuments(documents, today)} itemOptions={itemOptions} ai={ai} />
     </div>

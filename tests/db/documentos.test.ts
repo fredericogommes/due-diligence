@@ -107,3 +107,18 @@ describe("análises e apontamentos", () => {
     expect(await asUser(db, CAIO, (q) => q("select id from public.document_analyses"))).toHaveLength(0);
   });
 });
+
+describe("pedidos de certidão", () => {
+  it("registra pedido do item do negócio; recusa item de outro negócio e estranhos", async () => {
+    await asUser(db, ANA, async (q) => {
+      const rows = await q("insert into public.certificate_requests (deal_id, deal_item_id, provider) values ($1, $2, 'simulado') returning status", [dealA, itemA]);
+      expect(rows).toEqual([{ status: "pendente" }]);
+      await expect(
+        q("insert into public.certificate_requests (deal_id, deal_item_id, provider) values ($1, $2, 'simulado')", [dealA2, itemA]),
+      ).rejects.toThrow(/item de outro negócio/);
+    });
+    await expect(
+      asUser(db, CAIO, (q) => q("insert into public.certificate_requests (deal_id, deal_item_id, provider) values ($1, $2, 'simulado')", [dealA, itemA])),
+    ).rejects.toThrow();
+  });
+});

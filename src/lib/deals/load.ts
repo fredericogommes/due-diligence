@@ -1,5 +1,5 @@
 import "server-only";
-import type { AnalysisRow, AssetRow, DealItemRow, DealRow, DocumentRow, FindingRow, PartyRow, TemplateItemRow } from "@/lib/db-types";
+import type { AnalysisRow, AssetRow, CertificateRequestRow, DealItemRow, DealRow, DocumentRow, FindingRow, PartyRow, TemplateItemRow } from "@/lib/db-types";
 import { createClient } from "@/lib/supabase/server";
 
 export type DealData = Awaited<ReturnType<typeof loadDeal>>;
@@ -11,7 +11,7 @@ export async function loadDeal(id: string) {
   const { data: deal } = await supabase.from("deals").select("*").eq("id", id).maybeSingle<DealRow>();
   if (!deal) return null;
 
-  const [parties, assets, items, templateItems, org, documents, analyses, findings] = await Promise.all([
+  const [parties, assets, items, templateItems, org, documents, analyses, findings, certRequests] = await Promise.all([
     supabase.from("parties").select("*").eq("deal_id", id).order("created_at").returns<PartyRow[]>(),
     supabase.from("assets").select("*").eq("deal_id", id).order("created_at").returns<AssetRow[]>(),
     supabase.from("deal_items").select("*").eq("deal_id", id).returns<DealItemRow[]>(),
@@ -20,6 +20,7 @@ export async function loadDeal(id: string) {
     supabase.from("documents").select("*").eq("deal_id", id).order("created_at").returns<DocumentRow[]>(),
     supabase.from("document_analyses").select("*").eq("deal_id", id).order("created_at", { ascending: false }).returns<AnalysisRow[]>(),
     supabase.from("findings").select("*").eq("deal_id", id).order("created_at").returns<FindingRow[]>(),
+    supabase.from("certificate_requests").select("*").eq("deal_id", id).order("created_at", { ascending: false }).returns<CertificateRequestRow[]>(),
   ]);
 
   // Última análise de cada documento.
@@ -36,5 +37,6 @@ export async function loadDeal(id: string) {
     documents: documents.data ?? [],
     latestAnalysis,
     findings: findings.data ?? [],
+    certRequests: certRequests.data ?? [],
   };
 }
