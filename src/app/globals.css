@@ -49,6 +49,21 @@
   --font-sans: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
 }
 
+@page {
+  size: A4;
+  margin: 16mm 14mm;
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+  .report {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 body {
   background: var(--bg);
   color: var(--text);

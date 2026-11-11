@@ -1,5 +1,5 @@
 /** Rotas acessíveis sem login. */
-const PUBLIC_PREFIXES = ["/login", "/auth/"] as const;
+const PUBLIC_PREFIXES = ["/login", "/auth/", ...(process.env.NODE_ENV === "production" ? [] : ["/demo/"])] as const;
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`));
