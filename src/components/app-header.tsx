@@ -9,7 +9,7 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
   return (
     <Link
       href={href}
-      className={`rounded-md px-3 py-1.5 text-sm ${active ? "bg-muted font-semibold text-ink" : "text-subtle hover:text-ink"}`}
+      className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-sm ${active ? "bg-muted font-semibold text-ink" : "text-subtle hover:text-ink"}`}
       aria-current={active ? "page" : undefined}
     >
       {label}
@@ -42,18 +42,16 @@ async function Nav({ current }: { current?: Section }) {
 export function AppHeader({ current }: { current?: Section }) {
   return (
     <header className="border-b border-line bg-surface print:hidden">
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-4">
-          <Link href="/painel" className="text-lg font-bold text-ink">Due Diligence</Link>
-          <nav className="flex flex-wrap gap-1">
-            <Suspense fallback={<NavLink href="/" label="Organizações" active={current === "organizacoes"} />}>
-              <Nav current={current} />
-            </Suspense>
-          </nav>
-        </div>
-        <form action={signOut}>
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+        <Link href="/painel" className="text-lg font-bold text-ink">Due Diligence</Link>
+        <form action={signOut} className="ml-auto sm:order-last">
           <button className="rounded-md border border-line px-3 py-1.5 text-sm hover:bg-muted">Sair</button>
         </form>
+        <nav className="-mx-1 flex w-full gap-1 overflow-x-auto px-1 sm:w-auto sm:flex-1">
+          <Suspense fallback={<NavLink href="/" label="Organizações" active={current === "organizacoes"} />}>
+            <Nav current={current} />
+          </Suspense>
+        </nav>
       </div>
     </header>
   );

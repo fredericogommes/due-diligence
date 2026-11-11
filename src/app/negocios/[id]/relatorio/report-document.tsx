@@ -23,7 +23,7 @@ const CONCLUSION_CLASS: Record<Conclusion, string> = {
 /** O documento do relatório (tela e impressão). */
 export function ReportDocument({ report: r, conclusion, opinion }: { report: ReportModel; conclusion: Conclusion; opinion: OpinionData | null }) {
   return (
-    <article className="report rounded-xl border border-line bg-white p-8 text-[13px] leading-relaxed text-[#1f2433] print:rounded-none print:border-0 print:p-0">
+    <article className="report rounded-xl border border-line bg-white p-4 text-[13px] sm:p-8 leading-relaxed text-[#1f2433] print:rounded-none print:border-0 print:p-0">
       <header className="mb-6 border-b-2 border-[#5b3fa0] pb-4 text-center">
         <p className="text-xs font-semibold uppercase tracking-widest text-[#b7791f]">{r.orgName}</p>
         <h1 className="mt-1 text-xl font-bold text-[#16264d]">RELATÓRIO PRELIMINAR DE DUE DILIGENCE</h1>
@@ -68,7 +68,8 @@ export function ReportDocument({ report: r, conclusion, opinion }: { report: Rep
       {r.sections.map((sec, i) => (
         <section key={sec.name} className="mb-5 break-inside-auto">
           <H2 n={i + 2}>{sec.name}</H2>
-          <table className="w-full border-collapse text-xs">
+          <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full min-w-[34rem] border-collapse text-xs print:min-w-0">
             <thead>
               <tr className="bg-[#5b3fa0] text-left text-white">
                 <th className="w-16 border border-[#d9dce6] px-2 py-1.5">Ref.</th>
@@ -95,6 +96,7 @@ export function ReportDocument({ report: r, conclusion, opinion }: { report: Rep
               ))}
             </tbody>
           </table>
+          </div>
         </section>
       ))}
 
@@ -158,7 +160,7 @@ export function ReportDocument({ report: r, conclusion, opinion }: { report: Rep
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <tr>
-      <th className="w-40 border border-[#d9dce6] bg-[#f3f0fa] px-3 py-2 text-left font-semibold text-[#5b3fa0]">{label}</th>
+      <th className="w-24 border border-[#d9dce6] bg-[#f3f0fa] px-2 py-2 text-left align-top font-semibold text-[#5b3fa0] sm:w-40 sm:px-3">{label}</th>
       <td className="border border-[#d9dce6] px-3 py-2">{value}</td>
     </tr>
   );

@@ -106,7 +106,7 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
       </div>
       <FormMessage error={error} />
 
-      <div className="grid gap-3 overflow-x-auto pb-2 md:grid-cols-5">
+      <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-3 xl:mx-0 xl:px-0">
         {STAGES.map((stage) => {
           const col = visible.filter((c) => c.stage === stage);
           return (
@@ -125,7 +125,7 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
                 if (id) move(id, stage);
                 setDragging(null);
               }}
-              className={`flex min-h-64 min-w-60 flex-col rounded-xl border bg-muted/50 p-2 transition-colors ${over === stage ? "border-brand bg-brand/5" : "border-line"}`}
+              className={`flex min-h-64 w-72 shrink-0 snap-start flex-col rounded-xl border bg-muted/50 p-2 transition-colors xl:w-auto xl:min-w-0 xl:flex-1 xl:shrink ${over === stage ? "border-brand bg-brand/5" : "border-line"}`}
             >
               <h2 className="mb-2 flex items-center justify-between px-1 text-sm font-semibold text-ink">
                 {STAGE_LABEL[stage]}
@@ -141,10 +141,10 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
                       setDragging(c.id);
                     }}
                     onDragEnd={() => setDragging(null)}
-                    className={`cursor-grab space-y-2 rounded-lg border border-line bg-surface p-3 text-sm shadow-sm ${dragging === c.id ? "opacity-50" : ""}`}
+                    className={`relative cursor-grab space-y-2 rounded-lg border border-line bg-surface p-3 text-sm shadow-sm ${dragging === c.id ? "opacity-50" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <Link href={`/negocios/${c.id}`} className="font-medium text-ink hover:text-brand hover:underline">
+                      <Link href={`/negocios/${c.id}`} className="min-w-0 break-words font-medium text-ink hover:text-brand hover:underline">
                         {c.title}
                       </Link>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${OWNER_STYLE[c.owner.who]}`}>
@@ -180,7 +180,7 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
                       id={`stage-${c.id}`}
                       value={c.stage}
                       onChange={(e) => move(c.id, e.target.value as Stage)}
-                      className="w-full rounded-md border border-line bg-surface px-1.5 py-1 text-xs md:hidden"
+                      className="w-full rounded-md border border-line bg-surface px-1.5 py-1 text-xs xl:hidden"
                     >
                       {STAGES.map((s) => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
                     </select>

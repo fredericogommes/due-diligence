@@ -55,7 +55,22 @@ async function DealList() {
   const orgName = new Map(orgs.map((o) => [o.id, o.name]));
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+    <>
+    {/* Celular: cartões em vez de tabela. */}
+    <ul className="space-y-3 sm:hidden">
+      {deals.map((d) => (
+        <li key={d.id} className="space-y-2 rounded-xl border border-line bg-surface p-4 text-sm">
+          <Link href={`/negocios/${d.id}`} className="block font-semibold text-ink hover:text-brand">{d.title}</Link>
+          <p className="text-xs text-subtle">
+            {DEAL_KIND_LABEL[d.kind]} · {DEAL_STATUS_LABEL[d.status]} · {formatBRL(d.price)}
+            {orgs.length > 1 ? ` · ${orgName.get(d.org_id)}` : ""}
+          </p>
+          <ProgressBar progress={byDeal.get(d.id)} />
+          <p className="text-xs text-subtle">Criado em {formatDate(d.created_at)}</p>
+        </li>
+      ))}
+    </ul>
+    <div className="hidden overflow-x-auto rounded-xl border border-line bg-surface sm:block">
       <table className="w-full min-w-[720px] text-sm">
         <thead className="bg-muted text-left text-xs uppercase tracking-wide text-subtle">
           <tr>
@@ -84,5 +99,6 @@ async function DealList() {
         </tbody>
       </table>
     </div>
+    </>
   );
 }
