@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { providerOptions, registroImoveisProvider, simulatedProvider } from "@/lib/certidoes/providers";
+import { isOnlineItem, pickProvider, providerOptions, registroImoveisProvider, simulatedOutcome, simulatedProvider } from "@/lib/certidoes/providers";
 import { simplePdf } from "@/lib/certidoes/simple-pdf";
 
 const latin1 = (b: Uint8Array) => Array.from(b, (c) => String.fromCharCode(c)).join("");
@@ -30,13 +30,48 @@ describe("provedores", () => {
   afterEach(() => vi.unstubAllEnvs());
   const imovel = { itemCode: "IMV-01", itemTitle: "Matrícula", asset: { description: "Apto", matricula: null, cartorio: null, cns: null, municipio: null, uf: null } };
 
-  it("simulado gera certidão negativa em PDF com validade de 30 dias", async () => {
-    const r = await simulatedProvider.request({ itemCode: "VPF-03", itemTitle: "CND federal", party: { name: "João", document: "52998224725" } }, "2026-11-11");
+  const pf = { itemCode: "VPF-03", itemTitle: "CND federal", party: { name: "João", document: "52998224725" } };
+
+  it("visualização simulada: PDF sem valor oficial, sem validade, resultado estável", async () => {
+    const r = await simulatedProvider.preview(pf, "2026-11-11");
     expect(r.status).toBe("concluido");
     if (r.status === "concluido") {
-      expect(r.meta).toMatchObject({ issuedAt: "2026-11-11", expiresAt: "2026-12-11", result: "negativa" });
+      expect(r.meta.expiresAt).toBeNull();
+      expect(r.meta.docType).toMatch(/visualização/);
       expect(latin1(r.file.bytes)).toContain("52998224725");
+      expect(r.meta.result).toBe(simulatedOutcome(pf));
     }
+    expect(simulatedOutcome({ ...pf, party: { name: "Fulano Positivo", document: null } })).toBe("positiva");
+  });
+
+  it("emissão simulada devolve boleto e, na consulta, a certidão oficial com validade de 30 dias", async () => {
+    const r = await simulatedProvider.request(pf, "2026-11-11");
+    expect(r.status).toBe("aguardando_pagamento");
+    if (r.status !== "aguardando_pagamento") return;
+    expect(r.boleto.due).toBe("2026-11-14");
+    expect(r.boleto.line.length).toBeGreaterThan(40);
+    const done = await simulatedProvider.poll(r.protocol, pf, "2026-11-12");
+    expect(done.status).toBe("concluido");
+    if (done.status === "concluido") expect(done.meta).toMatchObject({ issuedAt: "2026-11-12", expiresAt: "2026-12-12" });
+  });
+
+  it("só itens de certidão têm consulta online; documentos das partes não", () => {
+    expect(isOnlineItem("VPF-03")).toBe(true);
+    expect(isOnlineItem("VPF-01")).toBe(false);
+    expect(pickProvider({ itemCode: "IMV-03", itemTitle: "Título" }, "visualizacao")).toEqual({
+      ok: false,
+      reason: "Documento fornecido pelas partes (não há consulta online).",
+    });
+  });
+
+  it("matrícula usa o simulado enquanto o ONR não está ativo; em produção explica o motivo", () => {
+    vi.stubEnv("REGISTRO_IMOVEIS_API_KEY", "");
+    const c = pickProvider(imovel, "visualizacao");
+    expect(c.ok && c.provider.id).toBe("simulado");
+    vi.stubEnv("NODE_ENV", "production");
+    const p = pickProvider(imovel, "emissao");
+    expect(p.ok).toBe(false);
+    if (!p.ok) expect(p.reason).toMatch(/chave de API/);
   });
 
   it("simulado fica desligado em produção, salvo CERTIDOES_SIMULADO=1", () => {
@@ -53,7 +88,7 @@ describe("provedores", () => {
     expect(ri.available).toBe(false);
     expect(ri.reason).toMatch(/chave de API/);
     expect(ri.missing).toEqual(["número da matrícula", "cartório (CNS ou nome)", "UF"]);
-    expect(registroImoveisProvider.supports("VPF-03")).toBe(false);
+    expect(registroImoveisProvider.supports("VPF-03", "emissao")).toBe(false);
     expect(providerOptions({ itemCode: "VPF-03", itemTitle: "x" }).map((o) => o.id)).toEqual(["simulado"]);
   });
 });

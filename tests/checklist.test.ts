@@ -41,7 +41,7 @@ describe("buildChecklist", () => {
 
   it("ignora item cujo modelo não foi carregado e resume por status", () => {
     const s = summarize(buildChecklist(items, templates, parties, assets));
-    expect(s).toEqual({ faltante: 2, parcial: 1, completo: 1, dispensado: 0, total: 4, considered: 4, vencidos: 0 });
+    expect(s).toEqual({ faltante: 2, parcial: 1, completo: 1, dispensado: 0, total: 4, considered: 4, vencidos: 0, previewed: 0, previewPositive: 0 });
   });
 });
 
@@ -50,7 +50,7 @@ describe("documentos no checklist", () => {
   const doc = (id: string, item: string | null, issued: string | null, expires: string | null) => ({
     id, org_id: "o", deal_id: "d", deal_item_id: item, storage_path: `o/d/${id}`, file_name: `${id}.pdf`,
     mime_type: "application/pdf", size_bytes: 1, sha256: null, doc_type: null, issuer: null,
-    issued_at: issued, expires_at: expires, result: "negativa" as const, source: "upload" as const, notes: null, created_at: "",
+    issued_at: issued, expires_at: expires, result: "negativa" as const, source: "upload" as const, is_preview: false, notes: null, created_at: "",
   });
 
   it("anexa documentos ao item, calcula validade e avisa item completo com tudo vencido", () => {

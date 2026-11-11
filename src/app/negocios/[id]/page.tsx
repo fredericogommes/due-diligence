@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
-import { buildChecklist, summarize, unassignedDocuments } from "@/lib/checklist/build";
+import { assetLabel, buildChecklist, partyLabel, summarize, unassignedDocuments } from "@/lib/checklist/build";
 import { todaySaoPaulo } from "@/lib/checklist/validity";
-import { providerOptions } from "@/lib/certidoes/providers";
+import { isOnlineItem, pickProvider } from "@/lib/certidoes/providers";
 import { subjectFromRows } from "@/lib/certidoes/subject";
 import type { CertInfo } from "./certificate-request";
 import { loadDeal } from "@/lib/deals/load";
@@ -15,6 +15,7 @@ import { ChecklistView } from "./checklist-view";
 import { DealActions } from "./deal-actions";
 import { ExtraDocuments } from "./extra-documents";
 import { FindingsSection } from "./findings-section";
+import { OnlineCertificates, type Boleto } from "./online-certificates";
 import { PartiesSection } from "./parties-section";
 
 export const metadata: Metadata = { title: "Negócio · Due Diligence" };
@@ -47,14 +48,44 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
   const summary = summarize(sections);
   const tplById = new Map(templateItems.map((t) => [t.id, t]));
   const certs: Record<string, CertInfo> = {};
+  const boletos: Boleto[] = [];
+  let onlineItems = 0;
   for (const it of items) {
     const t = tplById.get(it.template_item_id);
     if (!t) continue;
+    const online = isOnlineItem(t.code) && it.status !== "dispensado";
+    if (online) onlineItems++;
+    const choice = pickProvider(subjectFromRows(it, t, parties, assets), "emissao");
+    const issue = certRequests.find((r) => r.deal_item_id === it.id && r.mode === "emissao") ?? null;
     certs[it.id] = {
-      options: providerOptions(subjectFromRows(it, t, parties, assets)),
-      requests: certRequests.filter((r) => r.deal_item_id === it.id),
+      online: isOnlineItem(t.code),
+      source: choice.ok ? { ok: true, name: choice.provider.name } : { ok: false, reason: choice.reason },
+      issue,
     };
+    if (issue?.status === "aguardando_pagamento") {
+      const p = it.party_id ? parties.find((x) => x.id === it.party_id) : undefined;
+      const a = it.asset_id ? assets.find((x) => x.id === it.asset_id) : undefined;
+      boletos.push({
+        id: issue.id,
+        label: `${t.code} · ${t.title}${p ? ` — ${partyLabel(p)}` : a ? ` — ${assetLabel(a)}` : ""}`,
+        line: issue.boleto_line,
+        url: issue.boleto_url,
+        due: issue.boleto_due,
+        costCents: issue.cost_cents,
+      });
+    }
   }
+  const latestIssues = Object.values(certs).map((c) => c.issue).filter((i) => i !== null);
+  const online = {
+    qualified: assets.length > 0 && parties.length > 0,
+    onlineItems,
+    previewed: summary.previewed,
+    positives: summary.previewPositive,
+    openFindings: findings.filter((f) => !f.resolved).length,
+    issueOpen: latestIssues.filter((i) => i.status === "aguardando_pagamento" || i.status === "pendente").length,
+    issueDone: latestIssues.filter((i) => i.status === "concluido").length,
+    aiEnabled: ai.aiEnabled,
+  };
   const itemOptions = sections.flatMap((s) =>
     s.entries.map((e) => ({ id: e.id, label: `${e.code} · ${e.title}${e.subject ? ` (${e.subject})` : ""}` })),
   );
@@ -71,6 +102,8 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
         </div>
         <DealActions dealId={deal.id} status={deal.status} />
       </section>
+
+      <OnlineCertificates dealId={deal.id} summary={online} boletos={boletos} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AssetsSection dealId={deal.id} dealKind={deal.kind} assets={assets} />

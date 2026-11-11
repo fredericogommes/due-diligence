@@ -24,7 +24,10 @@ export type ChecklistEntry = {
   partyId: string | null;
   assetId: string | null;
   sortOrder: number;
+  /** Documentos oficiais/anexados (sem as visualizações). */
   documents: DocView[];
+  /** Visualização mais recente da consulta prévia (sem valor oficial), se houver. */
+  preview: DocView | null;
   /** Melhor validade entre os documentos do item (basta um válido). null = sem documento. */
   validity: ValidityState | null;
   /** Item marcado como completo/parcial cujos documentos estão todos vencidos. */
@@ -33,7 +36,14 @@ export type ChecklistEntry = {
 
 export type ChecklistSection = { name: string; entries: ChecklistEntry[] };
 
-export type ChecklistSummary = Record<ItemStatus, number> & { total: number; considered: number; vencidos: number };
+export type ChecklistSummary = Record<ItemStatus, number> & {
+  total: number;
+  considered: number;
+  vencidos: number;
+  /** Itens com visualização na consulta prévia, e quantas deram positivo. */
+  previewed: number;
+  previewPositive: number;
+};
 
 export function partyLabel(p: Pick<PartyRow, "name" | "role">): string {
   return `${p.name} — ${PARTY_ROLE_LABEL[p.role]}`;
@@ -66,7 +76,10 @@ export function buildChecklist(
     if (!t) continue;
     const p = it.party_id ? party.get(it.party_id) : undefined;
     const a = it.asset_id ? asset.get(it.asset_id) : undefined;
-    const docs: DocView[] = (docsByItem.get(it.id) ?? []).map((d) => ({
+    const all = docsByItem.get(it.id) ?? [];
+    const latestPreview = all.filter((d) => d.is_preview).sort((x, y) => y.created_at.localeCompare(x.created_at))[0];
+    const preview: DocView | null = latestPreview ? { ...latestPreview, validity: computeValidity(latestPreview, null, today) } : null;
+    const docs: DocView[] = all.filter((d) => !d.is_preview).map((d) => ({
       ...d,
       validity: computeValidity(d, t.validity_days, today),
     }));
@@ -86,6 +99,7 @@ export function buildChecklist(
       assetId: it.asset_id,
       sortOrder: t.sort_order,
       documents: docs,
+      preview,
       validity,
       expiredWarning: validity === "vencida" && (it.status === "completo" || it.status === "parcial"),
     });
@@ -112,12 +126,16 @@ export function buildChecklist(
 
 /** Contagem por status. "considered" exclui os dispensados. */
 export function summarize(sections: ChecklistSection[]): ChecklistSummary {
-  const s: ChecklistSummary = { faltante: 0, parcial: 0, completo: 0, dispensado: 0, total: 0, considered: 0, vencidos: 0 };
+  const s: ChecklistSummary = { faltante: 0, parcial: 0, completo: 0, dispensado: 0, total: 0, considered: 0, vencidos: 0, previewed: 0, previewPositive: 0 };
   for (const sec of sections) {
     for (const e of sec.entries) {
       s[e.status]++;
       s.total++;
       if (e.expiredWarning) s.vencidos++;
+      if (e.preview) {
+        s.previewed++;
+        if (e.preview.result === "positiva") s.previewPositive++;
+      }
     }
   }
   s.considered = s.total - s.dispensado;

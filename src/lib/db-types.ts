@@ -93,6 +93,8 @@ export type DocumentRow = {
   expires_at: string | null;
   result: import("./documents").DocResult;
   source: "upload" | "api";
+  /** Visualização obtida na consulta prévia (sem valor oficial). */
+  is_preview: boolean;
   notes: string | null;
   created_at: string;
 };
@@ -122,7 +124,7 @@ export type FindingRow = {
   title: string;
   description: string | null;
   evidence: string | null;
-  source: "ia" | "manual";
+  source: "ia" | "manual" | "consulta";
   resolved: boolean;
   created_at: string;
 };
@@ -132,10 +134,14 @@ export type CertificateRequestRow = {
   deal_id: string;
   deal_item_id: string;
   provider: string;
-  status: "pendente" | "concluido" | "erro";
+  mode: "visualizacao" | "emissao";
+  status: "pendente" | "aguardando_pagamento" | "concluido" | "erro";
   protocol: string | null;
   cost_cents: number | null;
   document_id: string | null;
   error: string | null;
+  boleto_url: string | null;
+  boleto_line: string | null;
+  boleto_due: string | null;
   created_at: string;
 };

@@ -49,7 +49,7 @@ export function ReportDocument({ report: r, conclusion, opinion }: { report: Rep
                 .join("; ")}
             />
           )}
-          <Meta label="Base de análise" value="Checklist documental do negócio confrontado com os documentos anexados" />
+          <Meta label="Base de análise" value="Checklist documental do negócio confrontado com as visualizações da consulta prévia e com os documentos e certidões anexados" />
           <Meta label="Data" value={formatDate(r.date)} />
         </tbody>
       </table>

@@ -18,13 +18,14 @@
 - compra e venda de imóvel;
 - cessão de cotas / trespasse.
 
-**Fluxo:**
-1. cadastrar o negócio, as partes e os bens;
-2. o checklist é gerado automaticamente;
-3. anexar as certidões;
-4. a IA lê cada documento e aponta riscos;
-5. sai um relatório no formato do parecer TETTU, com conclusão sugerida e um parecer editável;
-6. imprimir ou salvar em PDF.
+**Fluxo (redefinido pelo dono em 11/11/2026 — M7):**
+1. **Qualificação:** o usuário cadastra as partes e o objeto do negócio (bens); o checklist é gerado automaticamente.
+2. **Consulta prévia:** o sistema busca sozinho a **visualização** de cada certidão online pertinente (sem valor oficial), a IA lê cada uma, e resultado positivo vira apontamento.
+3. **Relatório preliminar** com inconsistências, riscos e apontamentos, no formato do parecer TETTU, com conclusão sugerida e parecer editável (versões rascunho → revisado → assinado).
+4. **Emissão (se as tratativas avançarem):** "Requerer certidões oficiais" pede pela API a emissão de todas as certidões válidas; o sistema **só repassa o boleto** ao usuário; depois do pagamento a certidão oficial chega e é anexada ao item.
+5. Documentos que não existem online (identidade, contratos, título aquisitivo, laudos) continuam entrando por upload.
+
+Itens com consulta online: `ONLINE_ITEM_CODES` em `src/lib/certidoes/providers.ts`. Hoje só o **provedor simulado** atende as duas fases (PDFs e boletos fictícios, "sem valor legal"). Fontes reais pendentes: ONR para matrícula (pedido de chave redigido) e um **agregador com API** (ex.: Infosimples) para CND federal, CNDT, distribuidores, protestos etc., que têm captcha.
 
 ## 2. Estado atual (resumo honesto)
 
@@ -101,13 +102,14 @@ O dono respondeu "Sim, siga" às suposições propostas. Daí saíram estas deci
 | M2 | `1240051` | Upload para o Storage (`<org>/<negócio>/<uuid>-arquivo`, até 20 MB, PDF/imagem). Liga o arquivo ao item, calcula a validade e trata documentos fora do checklist |
 | M3 | `287d785` | "Ler com IA": tipo, emissor, datas, resultado, ônus e divergências. Gera riscos (`findings`) com gravidade e permite riscos manuais |
 | M4 | `f53fccf` | Relatório no formato do parecer TETTU, conclusão sugerida, parecer editável (`deal_opinions`) e impressão em A4 |
+| M7 | (ver git log) | Fluxo em duas fases: consulta prévia (visualizações, `documents.is_preview`) e emissão com boleto (`certificate_requests.mode`, `boleto_*`, status `aguardando_pagamento`); painel "Etapas do negócio"; relatório preliminar a partir das visualizações |
 | M6 | (ver git log) | Gestão de membros (convites pelo e-mail da pessoa, troca de papel, remoção, sair), log de auditoria (`audit_log`, só nomes dos campos alterados, sem valores) e versões do relatório (`report_versions`: rascunho → revisado → assinado, conteúdo congelado em `snapshot`) |
 | M5 | `cfa7daa` | Pedidos de certidão (`certificate_requests`) com protocolo e consulta. Provedores: ONR (desativado, mostra o motivo) e simulado (PDF fictício, desligado em produção) |
 
 ## 5. Mapa do código
 
 ```
-supabase/migrations/      8 migrações, aplicar EM ORDEM (m0 → m6)
+supabase/migrations/      9 migrações, aplicar EM ORDEM (m0 → m7)
 src/proxy.ts              proteção otimista das rotas (redireciona para /login)
 src/app/                  login, auth/confirm, página inicial (organizações)
 src/app/negocios/         lista, novo, [id] (detalhe), [id]/historico, [id]/relatorio e [id]/relatorio/versoes/[n]; *-actions.ts = Server Actions

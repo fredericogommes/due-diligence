@@ -93,8 +93,14 @@ function docLine(d: DocView, analyses: Record<string, AnalysisRow>, withName = t
 function observation(e: ChecklistEntry, analyses: Record<string, AnalysisRow>): string {
   const lines: string[] = [];
   if (e.notes) lines.push(e.notes);
+  if (e.preview) {
+    const res = e.preview.result === "positiva" ? "CONSTA REGISTRO" : e.preview.result === "negativa" ? "nada consta" : "resultado indeterminado";
+    const a = analyses[e.preview.id];
+    const summary = a?.status === "concluida" && a.output ? ` — ${a.output.summary}` : "";
+    lines.push(`Visualização (consulta prévia em ${formatDate(e.preview.issued_at ?? e.preview.created_at)}): ${res}${summary}.`);
+  }
   if (e.documents.length) lines.push(`Documentos: ${e.documents.map((d) => docLine(d, analyses)).join("; ")}.`);
-  else if (e.status !== "dispensado") lines.push("Nenhum documento localizado.");
+  else if (e.status !== "dispensado") lines.push(e.preview ? "Certidão oficial ainda não emitida." : "Nenhum documento localizado.");
   if (e.expiredWarning) lines.push("Atenção: documento vencido — solicitar versão atualizada.");
   return lines.join(" ");
 }
@@ -116,21 +122,29 @@ export function buildReport(input: ReportInput, today: string): ReportModel {
   const counts = { total: s.total, completo: s.completo, parcial: s.parcial, faltante: s.faltante, dispensado: s.dispensado, vencidos: s.vencidos };
   const entries = sections.flatMap((x) => x.entries);
   const openFindings = sortBySeverity(input.findings.filter((f) => !f.resolved));
-  const requiredMissing = entries.filter((e) => e.required && e.status === "faltante");
+  // Item consultado na fase prévia (com visualização) não conta como "não localizado".
+  const requiredMissing = entries.filter((e) => e.required && e.status === "faltante" && !e.preview);
   const conclusion = suggestConclusion(counts, openFindings, requiredMissing.length);
 
   const considered = s.total - s.dispensado;
+  const onlyPreview = entries.filter((e) => e.status === "faltante" && e.preview).length;
   const pl = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   const executiveSummary =
     considered === 0
       ? "Ainda não há itens de checklist para este negócio: cadastre os bens e as partes para gerar a lista de documentos."
       : `Dos ${pl(considered, "item documental considerado", "itens documentais considerados")}, ` +
         `${pl(s.completo, "está integralmente atendido", "estão integralmente atendidos")}, ` +
-        `${pl(s.parcial, "atendido apenas parcialmente", "atendidos apenas parcialmente")} e ` +
-        `${pl(s.faltante, "não foi localizado", "não foram localizados")}` +
+        `${pl(s.parcial, "atendido apenas parcialmente", "atendidos apenas parcialmente")}${onlyPreview ? ", " : " e "}` +
+        (onlyPreview
+          ? `${pl(s.faltante - onlyPreview, "não foi localizado", "não foram localizados")} e ${pl(onlyPreview, "tem apenas a visualização da consulta prévia", "têm apenas a visualização da consulta prévia")}`
+          : `${pl(s.faltante, "não foi localizado", "não foram localizados")}`) +
         (s.dispensado ? ` (${pl(s.dispensado, "dispensado por não se aplicar", "dispensados por não se aplicarem")})` : "") +
         "." +
         (s.vencidos ? ` ${s.vencidos === 1 ? "1 item atendido depende de documento vencido" : `${s.vencidos} itens atendidos dependem de documentos vencidos`}.` : "") +
+        (s.previewed
+          ? ` Na consulta prévia, ${pl(s.previewed, "certidão foi visualizada", "certidões foram visualizadas")}` +
+            (s.previewPositive ? `, ${pl(s.previewPositive, "com registro", "com registro")}.` : ", sem registros.")
+          : "") +
         (openFindings.length ? ` Há ${pl(openFindings.length, "risco ou apontamento em aberto", "riscos ou apontamentos em aberto")}.` : "");
 
   const attention = [
@@ -146,6 +160,9 @@ export function buildReport(input: ReportInput, today: string): ReportModel {
     );
   }
   if (s.vencidos) recommendations.push("Solicitar a reemissão das certidões vencidas antes da assinatura.");
+  if (s.previewed && entries.some((e) => e.preview && !e.documents.length)) {
+    recommendations.push("As visualizações não substituem as certidões oficiais: se as tratativas avançarem, requerer a emissão das certidões oficiais antes da assinatura.");
+  }
   for (const f of openFindings.filter((x) => x.severity === "critico" || x.severity === "alto")) {
     recommendations.push(`Tratar no instrumento: ${f.title} (exigir baixa/cancelamento, garantia, retenção de preço ou condição suspensiva).`);
   }

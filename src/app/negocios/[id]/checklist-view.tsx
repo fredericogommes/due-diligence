@@ -5,7 +5,7 @@ import { inputClass } from "@/components/ui";
 import type { ChecklistEntry, ChecklistSection, ChecklistSummary } from "@/lib/checklist/build";
 import { ITEM_STATUS_LABEL, ITEM_STATUSES, type ItemStatus } from "@/lib/domain";
 import { updateItem } from "../actions";
-import { CertificateRequest, type CertInfo } from "./certificate-request";
+import { ItemOnlineStatus, type CertInfo } from "./certificate-request";
 import { DocumentList, DocumentUploader, type AiProps, type ItemOption } from "./documents";
 
 export const STATUS_STYLE: Record<ItemStatus, string> = {
@@ -116,11 +116,20 @@ function ItemRow({ dealId, entry, itemOptions, ai, cert }: { dealId: string; ent
         {entry.expiredWarning && (
           <p className="mt-1 text-xs font-semibold text-danger">Atenção: o documento deste item está vencido — peça uma certidão atualizada.</p>
         )}
+        {cert && <ItemOnlineStatus info={cert} />}
+        {entry.preview && (
+          <div className="mt-2 rounded-md border border-dashed border-line bg-muted/40 p-2">
+            <p className={`text-xs font-semibold ${entry.preview.result === "positiva" ? "text-danger" : "text-subtle"}`}>
+              Visualização da consulta prévia{entry.preview.result === "positiva" ? " — CONSTA REGISTRO" : entry.preview.result === "negativa" ? " — nada consta" : ""}
+              <span className="font-normal"> (sem valor oficial)</span>
+            </p>
+            <DocumentList dealId={dealId} docs={[entry.preview]} ai={ai} />
+          </div>
+        )}
         <DocumentList dealId={dealId} docs={entry.documents} itemOptions={itemOptions} ai={ai} />
         <button type="button" className="mt-2 text-xs font-semibold text-brand hover:underline" onClick={() => setAttaching((a) => !a)}>
           {attaching ? "Cancelar" : entry.documents.length ? "+ Anexar outro documento" : "+ Anexar documento"}
         </button>
-        {cert && <CertificateRequest dealId={dealId} itemId={entry.id} info={cert} />}
         {attaching && <DocumentUploader dealId={dealId} itemId={entry.id} onDone={() => setAttaching(false)} />}
         {error && <p className="mt-1 text-xs text-danger" role="alert">{error}</p>}
       </div>

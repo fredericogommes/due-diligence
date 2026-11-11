@@ -28,7 +28,7 @@ const I = (id: string, t: string, status: DealItemRow["status"], party: string |
 const D = (id: string, item: string | null, docType: string, issued: string | null, expires: string | null, result: DocumentRow["result"]): DocumentRow => ({
   id, org_id: "o", deal_id: "demo", deal_item_id: item, storage_path: "", file_name: `${id}.pdf`, mime_type: "application/pdf",
   size_bytes: 200_000, sha256: null, doc_type: docType, issuer: null, issued_at: issued, expires_at: expires, result,
-  source: "upload", notes: null, created_at: "",
+  source: "upload", is_preview: false, notes: null, created_at: "",
 });
 
 export function demoReportInput(): ReportInput {

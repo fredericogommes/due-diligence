@@ -19,7 +19,7 @@ const finding = (severity: FindingRow["severity"], resolved = false): FindingRow
 const doc = (id: string, itemId: string | null, issued: string | null): DocumentRow => ({
   id, org_id: "o", deal_id: "d", deal_item_id: itemId, storage_path: "p", file_name: `${id}.pdf`, mime_type: "application/pdf",
   size_bytes: 1, sha256: null, doc_type: `Doc ${id}`, issuer: null, issued_at: issued, expires_at: null, result: "negativa",
-  source: "upload", notes: null, created_at: "",
+  source: "upload", is_preview: false, notes: null, created_at: "",
 });
 
 const templateItems = [
@@ -85,4 +85,41 @@ describe("buildReport", () => {
     expect(r.executiveSummary).toMatch(/cadastre os bens e as partes/);
     expect(r.suggestedConclusion).toBe("viavel");
   });
+});
+
+describe("relatório preliminar com consulta prévia", () => {
+  const preview = (id: string, itemId: string, result: DocumentRow["result"]): DocumentRow => ({
+    ...doc(id, itemId, "2026-11-10"), source: "api", is_preview: true, result, doc_type: `Visualização ${id}`,
+  });
+  const input = {
+    deal, orgName: "TETTU", parties: [], assets: [],
+    items: [item("i1", "t1", "faltante"), item("i2", "t2", "faltante"), item("i3", "t3", "faltante")],
+    templateItems,
+    documents: [preview("v1", "i1", "negativa"), preview("v2", "i2", "positiva")],
+    latestAnalysis: {},
+    findings: [finding("alto")],
+  };
+
+  it("visualização conta como consultado: não vira 'não localizado' nem documento oficial", () => {
+    const r = buildReport(input, "2026-11-11");
+    const rows = r.sections.flatMap((s) => s.rows);
+    expect(rows.find((x) => x.code === "SOC-01")!.observation).toBe(
+      "Visualização (consulta prévia em 10/11/2026): nada consta. Certidão oficial ainda não emitida.",
+    );
+    expect(rows.find((x) => x.code === "SOC-02")!.observation).toMatch(/CONSTA REGISTRO/);
+    expect(r.attention.filter((a) => a.startsWith("Faltante"))).toEqual(["Faltante — OPR-01 T OPR-01"]);
+    expect(r.executiveSummary).toContain("Na consulta prévia, 2 certidões foram visualizadas, 1 com registro.");
+    expect(r.recommendations.some((x) => x.includes("não substituem as certidões oficiais"))).toBe(true);
+  });
+});
+
+it("resumo separa itens só com visualização dos não localizados", () => {
+  const r = buildReport({
+    deal, orgName: "X", parties: [], assets: [], templateItems, latestAnalysis: {}, findings: [],
+    items: [item("i1", "t1", "faltante"), item("i3", "t3", "faltante")],
+    documents: [{ ...doc("v1", "i1", "2026-11-10"), is_preview: true, source: "api" }],
+  }, "2026-11-11");
+  expect(r.executiveSummary).toBe(
+    "Dos 2 itens documentais considerados, 0 estão integralmente atendidos, 0 atendidos apenas parcialmente, 1 não foi localizado e 1 tem apenas a visualização da consulta prévia. Na consulta prévia, 1 certidão foi visualizada, sem registros.",
+  );
 });
