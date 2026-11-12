@@ -40,6 +40,8 @@ describe("rotas", () => {
   it("só login e auth são públicas", () => {
     expect(isPublicPath("/login")).toBe(true);
     expect(isPublicPath("/auth/confirm")).toBe(true);
+    expect(isPublicPath("/macedo-keenan")).toBe(true);
+    expect(isPublicPath("/macedo-keenanx")).toBe(false);
     expect(isPublicPath("/")).toBe(false);
     expect(isPublicPath("/loginx")).toBe(false);
     expect(isPublicPath("/negocios")).toBe(false);
