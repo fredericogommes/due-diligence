@@ -36,6 +36,7 @@ Itens com consulta online: `ONLINE_ITEM_CODES` em `src/lib/certidoes/providers.t
 | Banco Supabase real | **Criado** em 11/11/2026: projeto `due-diligence` (ref `igcyltxllpzayivykerk`, sa-east-1, plano gratuito), com as 8 migrações aplicadas. `.env.local` aponta para ele |
 | Teste de ponta a ponta | **Feito em 11/11/2026** com o banco real e duas contas de teste (`*@due-diligence.test`, senhas no `.env.local`): login, organização, negócio, bem, parte, checklist, upload, download por link temporário, pedido simulado, status, risco, parecer, versão revisada e assinada, histórico, convite e aceite, troca de papel. **Faltam:** cadastro com confirmação por e-mail (ver abaixo) e "Ler com IA" |
 | Tela verificada no navegador | `/demo/relatorio` (relatório com dados fictícios, só em desenvolvimento) e o redirecionamento para `/login` |
+| Demonstração para apresentar | `/macedo-keenan` (12/11/2026): página **pública** que reproduz o visual do site macedokeenan.adv.br (cores e fontes lidas do site, logos pelo CDN dele) com a seção "Due diligence" e o fluxo das duas fases simulado no navegador. Dados fictícios, sem banco |
 | Leitura por IA | Implementada e testada com dublê. **Nunca chamou a API real** (falta `ANTHROPIC_API_KEY`) |
 | Certidões online (ONR) | Arquitetura pronta; o provedor fica **desativado de propósito** até chegarem a chave e a documentação oficial |
 | Deploy (Vercel) | **Não feito** |

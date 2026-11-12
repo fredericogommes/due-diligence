@@ -1,0 +1,63 @@
+/* Identidade visual do site macedokeenan.adv.br (valores lidos do :root do site em 12/11/2026). */
+.mk {
+  --mk-navy: #14233a;
+  --mk-navy-deep: #0f1b2e;
+  --mk-navy-black: #0b1524;
+  --mk-gold: #b08d57;
+  --mk-gold-deep: #8a6a3b;
+  --mk-gold-pale: #f4eee3;
+  --mk-brass: #c9a86a;
+  --mk-ink: #141c28;
+  --mk-ink-soft: #4f5b69;
+  --mk-line: #e5e1d8;
+  --mk-bg: #fbfaf7;
+  --mk-paper: #f5f2ec;
+  --mk-ok: #2f7a4f;
+  --mk-warn: #b7791f;
+  --mk-danger: #b4322f;
+  background: var(--mk-bg);
+  color: var(--mk-ink);
+  font-family: Manrope, Inter, system-ui, sans-serif;
+  color-scheme: light;
+}
+
+.mk .mk-serif {
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.mk .mk-hero {
+  background:
+    radial-gradient(700px 420px at 92% 8%, rgba(176, 141, 87, 0.24), transparent 62%),
+    linear-gradient(135deg, #0b1524 0%, #13233a 55%, #1c3150 100%);
+}
+
+.mk .mk-btn-gold {
+  background: linear-gradient(135deg, #c9a86a 0%, #b08d57 100%);
+  color: #0b1524;
+}
+.mk .mk-btn-gold:hover {
+  filter: brightness(1.06);
+}
+
+.mk .mk-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: rgba(180, 50, 47, 0.12);
+  transform: rotate(-24deg);
+  white-space: nowrap;
+}
+
+@keyframes mk-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.mk .mk-pulse {
+  animation: mk-pulse 1s ease-in-out infinite;
+}
