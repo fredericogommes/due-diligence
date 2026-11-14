@@ -11,3 +11,4 @@ A conversa que construiu o projeto está em `docs/conversa/CONVERSA.md`, com o P
 - Não invente endpoints de terceiros (ONR/cartórios) e não burle captcha.
 - Mudou alguma decisão, etapa ou pendência? Atualize `docs/SITUACAO_DO_PROJETO.md` no mesmo commit.
 - Dev server na porta 3100. No Windows, não edite arquivos com `Set-Content` do PowerShell 5.1, porque ele corrompe UTF-8.
+- Continuidade entre sessões e com o Codex: `docs/HANDOFF.md` (tarefa atual, branch, commit base, pendências) e decisões em `docs/adr/`.

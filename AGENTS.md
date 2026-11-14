@@ -1,3 +1,7 @@
+# Instruções do projeto
+
+Leia `CLAUDE.md` (regras do projeto, em português) e `docs/HANDOFF.md` (trabalho em andamento, branch e pendências) antes de alterar o código.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
