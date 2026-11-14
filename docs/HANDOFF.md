@@ -107,3 +107,13 @@ Reverter os três commits da branch e, se as migrações tiverem sido aplicadas,
 - IA com citação por página e incerteza (Fase 4) — depende da chave Anthropic e da avaliação do fluxo de dados.
 - Transições de etapa com pré-condições (Fase 2), checklists por segmento (rural, terreno, empreendimento).
 - Relatório: seção de limitações da análise e fontes consultadas (Fase 6).
+
+---
+
+## Publicação 2026-11-14 (autorizada pelo Fred)
+
+- Migrações M10–M14 aplicadas no Supabase (`igcyltxllpzayivykerk`), na ordem, depois de conferir zero divergências de `org_id` entre negócios e tabelas filhas.
+- Teste no navegador contra o banco migrado: abrir documento (gera evento "download"), apontamento mitigado com justificativa, nova versão de documento (versão 2 + anterior guardada), caixas de revisor jurídico na organização.
+- `feat/mk-entrega` juntada ao `main` por fast-forward (commit `0a62d99`); CI verde; Vercel publicou em produção.
+- Produção conferida: Gestão, Quadro e Negócios sem rolagem lateral; `/macedo-keenan` com o mesmo hash de texto e 16 links em 390/768/1440.
+- Aviso do Supabase em aberto: proteção contra senhas vazadas desligada (Auth → Password security), ajuste de painel do dono.
