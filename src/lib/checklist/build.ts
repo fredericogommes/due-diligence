@@ -7,7 +7,28 @@ import type { AssetRow, DealItemRow, DocumentRow, PartyRow, TemplateItemRow } fr
 import { ASSET_KIND_LABEL, PARTY_ROLE_LABEL, type ItemStatus } from "@/lib/domain";
 import { bestValidity, computeValidity, type Validity, type ValidityState } from "./validity";
 
-export type DocView = DocumentRow & { validity: Validity };
+/** Documento como aparece na tela: a versão mais recente, com as anteriores em `history` (mais nova primeiro). */
+export type DocView = DocumentRow & { validity: Validity; version?: number; history?: DocumentRow[] };
+
+/**
+ * Agrupa cadeias de versões (supersedes_id) e devolve só a versão mais recente
+ * de cada uma, com número da versão e histórico. Documentos sem cadeia ficam como estão.
+ */
+export function latestVersions(documents: DocumentRow[]): (DocumentRow & { version: number; history: DocumentRow[] })[] {
+  const byId = new Map(documents.map((d) => [d.id, d]));
+  const superseded = new Set(documents.map((d) => d.supersedes_id).filter((x): x is string => Boolean(x)));
+  return documents
+    .filter((d) => !superseded.has(d.id))
+    .map((d) => {
+      const history: DocumentRow[] = [];
+      let prev = d.supersedes_id ? byId.get(d.supersedes_id) : undefined;
+      while (prev && history.length < 100) {
+        history.push(prev);
+        prev = prev.supersedes_id ? byId.get(prev.supersedes_id) : undefined;
+      }
+      return { ...d, version: history.length + 1, history };
+    });
+}
 
 export type ChecklistEntry = {
   id: string;
@@ -62,8 +83,8 @@ export function buildChecklist(
   today = "1970-01-01",
 ): ChecklistSection[] {
   const tpl = new Map(templateItems.map((t) => [t.id, t]));
-  const docsByItem = new Map<string, DocumentRow[]>();
-  for (const d of documents) {
+  const docsByItem = new Map<string, ReturnType<typeof latestVersions>>();
+  for (const d of latestVersions(documents)) {
     if (!d.deal_item_id) continue;
     docsByItem.set(d.deal_item_id, [...(docsByItem.get(d.deal_item_id) ?? []), d]);
   }
@@ -144,7 +165,7 @@ export function summarize(sections: ChecklistSection[]): ChecklistSummary {
 
 /** Documentos que não estão ligados a nenhum item ("fora do checklist"). */
 export function unassignedDocuments(documents: DocumentRow[], today: string): DocView[] {
-  return documents
+  return latestVersions(documents)
     .filter((d) => !d.deal_item_id)
     .map((d) => ({ ...d, validity: computeValidity(d, null, today) }));
 }

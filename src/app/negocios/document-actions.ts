@@ -54,6 +54,7 @@ export async function registerDocument(input: unknown): Promise<DocActionState> 
       mime_type: check.mime,
       size_bytes: check.size,
       sha256: check.sha256,
+      supersedes_id: d.supersedesId ?? null,
       doc_type: d.docType ?? null,
       issuer: d.issuer ?? null,
       issued_at: d.issuedAt ?? null,

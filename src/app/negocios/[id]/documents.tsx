@@ -66,7 +66,7 @@ function MetaFields({ meta, onChange }: { meta: Meta; onChange: (m: Meta) => voi
 }
 
 /** Envia o arquivo direto ao Storage (pasta do negócio) e registra os metadados. */
-export function DocumentUploader({ dealId, itemId, onDone }: { dealId: string; itemId?: string; onDone?: () => void }) {
+export function DocumentUploader({ dealId, itemId, supersedesId, onDone }: { dealId: string; itemId?: string; supersedesId?: string; onDone?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [meta, setMeta] = useState<Meta>(emptyMeta);
   const [error, setError] = useState<string>();
@@ -95,7 +95,7 @@ export function DocumentUploader({ dealId, itemId, onDone }: { dealId: string; i
 
       setStep("Registrando…");
       const r = await registerDocument({
-        dealId, dealItemId: itemId ?? "", path, fileName: file.name, mimeType: file.type, sizeBytes: file.size, sha256, ...meta,
+        dealId, dealItemId: itemId ?? "", path, fileName: file.name, mimeType: file.type, sizeBytes: file.size, sha256, supersedesId: supersedesId ?? "", ...meta,
       });
       setStep(undefined);
       if (r.error) return setError(r.error);
@@ -118,7 +118,7 @@ export function DocumentUploader({ dealId, itemId, onDone }: { dealId: string; i
       <div className="flex items-center gap-3 sm:col-span-2">
         <button type="button" onClick={submit} disabled={pending || !file}
           className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-60">
-          {pending ? step ?? "Enviando…" : "Anexar documento"}
+          {pending ? step ?? "Enviando…" : supersedesId ? "Enviar nova versão" : "Anexar documento"}
         </button>
         {error && <p className="text-sm text-danger" role="alert">{error}</p>}
       </div>
@@ -153,6 +153,7 @@ export function DocumentList({ dealId, docs, itemOptions, ai }: {
 
 function DocumentRowView({ dealId, doc, itemOptions, extra }: { dealId: string; doc: DocView; itemOptions?: ItemOption[]; extra?: React.ReactNode }) {
   const [editing, setEditing] = useState(false);
+  const [newVersion, setNewVersion] = useState(false);
   const [meta, setMeta] = useState<Meta>({
     docType: doc.doc_type ?? "", issuer: doc.issuer ?? "", issuedAt: doc.issued_at ?? "", expiresAt: doc.expires_at ?? "",
     result: doc.result, notes: doc.notes ?? "",
@@ -174,6 +175,9 @@ function DocumentRowView({ dealId, doc, itemOptions, extra }: { dealId: string; 
         <button type="button" onClick={open} disabled={pending} className="font-semibold text-brand hover:underline" title="Abrir arquivo">
           📄 {doc.file_name}
         </button>
+        {doc.version && doc.version > 1 && (
+          <span className="rounded bg-brand/10 px-1.5 py-0.5 text-[11px] font-semibold text-brand" title="As versões anteriores continuam guardadas">versão {doc.version}</span>
+        )}
         <span className="text-subtle">{formatBytes(doc.size_bytes)}</span>
         {doc.doc_type && <span>· {doc.doc_type}</span>}
         {doc.issued_at && <span className="text-subtle">· emitido em {formatDate(doc.issued_at)}</span>}
@@ -181,6 +185,9 @@ function DocumentRowView({ dealId, doc, itemOptions, extra }: { dealId: string; 
         <ValidityBadge doc={doc} />
         <span className="ml-auto flex gap-3">
           <button type="button" className="text-brand hover:underline" onClick={() => setEditing((e) => !e)}>{editing ? "Fechar" : "Editar"}</button>
+          {!doc.is_preview && (
+            <button type="button" className="text-brand hover:underline" onClick={() => setNewVersion((v) => !v)}>{newVersion ? "Cancelar" : "Nova versão"}</button>
+          )}
           <button type="button" className="text-danger hover:underline" disabled={pending}
             onClick={() => {
               if (!confirm(`Apagar ${doc.file_name}? O arquivo será removido.`)) return;
@@ -191,6 +198,21 @@ function DocumentRowView({ dealId, doc, itemOptions, extra }: { dealId: string; 
         </span>
       </div>
       {extra}
+      {doc.history && doc.history.length > 0 && (
+        <details className="mt-1 text-[11px] text-subtle">
+          <summary className="cursor-pointer">Versões anteriores ({doc.history.length}) — guardadas sem alteração</summary>
+          <ul className="mt-1 space-y-0.5 pl-4">
+            {doc.history.map((h, i) => (
+              <li key={h.id}>
+                <HistoryLink doc={h} label={`versão ${doc.history!.length - i}`} />
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      {newVersion && (
+        <DocumentUploader dealId={dealId} itemId={doc.deal_item_id ?? undefined} supersedesId={doc.id} onDone={() => setNewVersion(false)} />
+      )}
       {editing && (
         <div className="mt-2 grid gap-3 sm:grid-cols-2">
           {itemOptions && (
@@ -219,5 +241,32 @@ function DocumentRowView({ dealId, doc, itemOptions, extra }: { dealId: string; 
       )}
       {error && <p className="mt-1 text-danger" role="alert">{error}</p>}
     </li>
+  );
+}
+
+/** Link para abrir uma versão anterior (o acesso também é registrado). */
+function HistoryLink({ doc, label }: { doc: { id: string; file_name: string; created_at: string; sha256: string | null }; label: string }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string>();
+  return (
+    <span>
+      <button
+        type="button"
+        disabled={pending}
+        className="text-brand hover:underline"
+        onClick={() =>
+          start(async () => {
+            const r = await getDocumentUrl(doc.id);
+            if (r.url) window.open(r.url, "_blank", "noopener,noreferrer");
+            else setError(r.error);
+          })
+        }
+      >
+        {label}: {doc.file_name}
+      </button>
+      {doc.created_at && <span> · enviada em {formatDate(doc.created_at)}</span>}
+      {doc.sha256 && <span title={doc.sha256}> · hash {doc.sha256.slice(0, 10)}…</span>}
+      {error && <span className="text-danger"> {error}</span>}
+    </span>
   );
 }

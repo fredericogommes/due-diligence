@@ -73,3 +73,16 @@ describe("documentos no checklist", () => {
     expect(unassignedDocuments(docs, "2026-11-11").map((d) => d.id)).toEqual(["d4"]);
   });
 });
+
+describe("versões de documentos", () => {
+  it("mostra só a versão mais recente, com número e histórico", async () => {
+    const { latestVersions } = await import("@/lib/checklist/build");
+    const base = { org_id: "o", deal_id: "d", deal_item_id: "i", storage_path: "p", file_name: "f.pdf", mime_type: "application/pdf", size_bytes: 1, sha256: null, doc_type: null, issuer: null, issued_at: null, expires_at: null, result: "negativa" as const, source: "upload" as const, is_preview: false, notes: null, created_at: "" };
+    const v1 = { ...base, id: "v1", supersedes_id: null };
+    const v2 = { ...base, id: "v2", supersedes_id: "v1" };
+    const v3 = { ...base, id: "v3", supersedes_id: "v2" };
+    const solo = { ...base, id: "s" };
+    const out = latestVersions([v1, v3, v2, solo]);
+    expect(out.map((d) => [d.id, d.version, d.history.map((h) => h.id)])).toEqual([["v3", 3, ["v2", "v1"]], ["s", 1, []]]);
+  });
+});

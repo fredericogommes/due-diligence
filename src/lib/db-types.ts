@@ -97,6 +97,8 @@ export type DocumentRow = {
   source: "upload" | "api";
   /** Visualização obtida na consulta prévia (sem valor oficial). */
   is_preview: boolean;
+  /** Versão anterior que este documento substitui (M14). */
+  supersedes_id?: string | null;
   notes: string | null;
   created_at: string;
 };

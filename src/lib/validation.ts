@@ -187,6 +187,7 @@ export const registerDocumentSchema = z.intersection(
     mimeType: z.enum(ALLOWED_MIME, "Tipo de arquivo não aceito (use PDF, JPG, PNG ou WEBP)."),
     sizeBytes: z.number().int().positive().max(MAX_DOCUMENT_BYTES, "Arquivo maior que 20 MB."),
     sha256: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+    supersedesId: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.uuid().optional()),
   }),
 );
 
