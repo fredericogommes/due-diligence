@@ -138,3 +138,15 @@ describe("revogação", () => {
     expect(after).toHaveLength(0);
   });
 });
+
+describe("auditoria de acesso a documentos", () => {
+  it("abrir documento registra quem abriu; B não abre nem descobre se existe", async () => {
+    const path = await asUser(db, A_OWNER, async (q) => (await q<{ p: string }>("select public.log_document_access($1) as p", [a.doc]))[0].p, { commit: true });
+    expect(path).toBe(a.path);
+    const log = await asUser(db, A_OWNER, (q) => q<{ actor_id: string; action: string }>("select actor_id, action from public.audit_log where record_id = $1 and action = 'download'", [a.doc]));
+    expect(log).toEqual([{ actor_id: A_OWNER, action: "download" }]);
+    await expect(asUser(db, B_OWNER, (q) => q("select public.log_document_access($1)", [a.doc]))).rejects.toThrow(/não encontrado/);
+    await expect(asUser(db, B_OWNER, (q) => q("select public.log_document_access($1)", ["00000000-0000-0000-0000-000000000099"]))).rejects.toThrow(/não encontrado/);
+    await expect(asUser(db, A_CLIENT, (q) => q("select public.log_document_access($1)", [a.doc]))).rejects.toThrow(/não encontrado/);
+  });
+});

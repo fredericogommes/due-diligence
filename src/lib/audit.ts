@@ -7,7 +7,7 @@ export type AuditRow = {
   actor_id: string | null;
   table_name: string;
   record_id: string | null;
-  action: "insert" | "update" | "delete";
+  action: "insert" | "update" | "delete" | "download";
   changed_fields: string[] | null;
   created_at: string;
 };
@@ -90,6 +90,7 @@ const VERB: Record<AuditRow["action"], { m: string; f: string }> = {
   insert: { m: "incluiu o", f: "incluiu a" },
   update: { m: "alterou o", f: "alterou a" },
   delete: { m: "excluiu o", f: "excluiu a" },
+  download: { m: "abriu o", f: "abriu a" },
 };
 
 /** Frase do evento, sem o nome de quem fez (ex.: "alterou a parte (nome, CPF/CNPJ)"). */

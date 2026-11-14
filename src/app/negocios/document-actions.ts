@@ -112,10 +112,12 @@ export async function deleteDocument(dealId: string, documentId: string): Promis
 /** Link temporário (5 min) para abrir o arquivo. */
 export async function getDocumentUrl(documentId: string): Promise<{ error?: string; url?: string }> {
   if (!(await getCurrentUserId())) return { error: "Sessão expirada. Entre de novo." };
+  if (!/^[0-9a-f-]{36}$/i.test(documentId)) return { error: "Documento não encontrado." };
   const supabase = await createClient();
-  const { data } = await supabase.from("documents").select("storage_path").eq("id", documentId).maybeSingle<{ storage_path: string }>();
-  if (!data) return { error: "Documento não encontrado." };
-  const { data: signed, error } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(data.storage_path, 300);
+  // Autoriza no banco e registra o acesso (audit_log, ação "download") antes de gerar o link.
+  const { data: path, error: logErr } = await supabase.rpc("log_document_access", { p_doc: documentId });
+  if (logErr || typeof path !== "string") return { error: "Documento não encontrado." };
+  const { data: signed, error } = await supabase.storage.from(DOCUMENTS_BUCKET).createSignedUrl(path, 300);
   if (error || !signed) return { error: "Não foi possível abrir o arquivo." };
   return { url: signed.signedUrl };
 }

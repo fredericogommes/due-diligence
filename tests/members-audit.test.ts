@@ -72,3 +72,9 @@ describe("describeAudit", () => {
     expect(formatDateTime("2026-11-11T17:05:00Z")).toBe("11/11/2026, 14:05");
   });
 });
+
+describe("describeAudit — acesso", () => {
+  it("download de documento", () => {
+    expect(describeAudit({ table_name: "documents", action: "download", changed_fields: null })).toBe("abriu o documento");
+  });
+});
