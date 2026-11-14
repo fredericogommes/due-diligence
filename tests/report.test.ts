@@ -123,3 +123,21 @@ it("resumo separa itens só com visualização dos não localizados", () => {
     "Dos 2 itens documentais considerados, 0 estão integralmente atendidos, 0 atendidos apenas parcialmente, 1 não foi localizado e 1 tem apenas a visualização da consulta prévia. Na consulta prévia, 1 certidão foi visualizada, sem registros.",
   );
 });
+
+describe("fontes consultadas e limitações", () => {
+  it("lista as fontes pela natureza e explica os limites, inclusive que ausência de registro não é ausência de risco", () => {
+    const preview = { ...doc("v1", "i1", "2026-11-10"), source: "api" as const, is_preview: true, issuer: "Provedor simulado", doc_type: "Matrícula (visualização)" };
+    const oficial = { ...doc("o1", "i2", "2026-11-12"), source: "api" as const, issuer: "1º RI", doc_type: "Matrícula" };
+    const r = buildReport({
+      deal, orgName: "X", parties: [], assets: [], templateItems, latestAnalysis: {},
+      items: [item("i1", "t1", "faltante"), item("i2", "t2", "completo")],
+      documents: [preview, oficial, doc("a1", null, null)],
+      findings: [{ ...finding("alto"), status: "proposto" }],
+    }, "2026-11-14");
+    expect(r.sources!.map((s) => s.kind)).toEqual(["certidao_oficial", "documento_anexado", "visualizacao"]);
+    expect(r.limitations!.join(" ")).toMatch(/ausência de registro numa consulta não comprova ausência de risco/i);
+    expect(r.limitations!.join(" ")).toMatch(/FICTÍCIOS/);
+    expect(r.limitations!.join(" ")).toMatch(/1 apontamento foi sugerido automaticamente/);
+    expect(r.limitations!.join(" ")).toMatch(/Visualizações da consulta prévia não têm valor de certidão/);
+  });
+});

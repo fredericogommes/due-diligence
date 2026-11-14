@@ -80,7 +80,7 @@ async function Report({ params }: { params: PageProps<"/negocios/[id]/relatorio"
       </div>
 
       <p className="mb-2 text-xs text-subtle print:hidden">Abaixo, o relatório com os dados de agora (ainda não congelado numa versão).</p>
-      <ReportDocument report={report} conclusion={conclusion} opinion={opinion ?? null} />
+      <ReportDocument report={report} conclusion={conclusion} opinion={opinion ?? null} showScope />
     </div>
   );
 }

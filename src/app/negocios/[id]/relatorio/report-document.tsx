@@ -21,7 +21,11 @@ const CONCLUSION_CLASS: Record<Conclusion, string> = {
 };
 
 /** O documento do relatório (tela e impressão). */
-export function ReportDocument({ report: r, conclusion, opinion }: { report: ReportModel; conclusion: Conclusion; opinion: OpinionData | null }) {
+/**
+ * `showScope` liga as seções "Fontes consultadas" e "Limitações da análise" (MK-01 Fase 6).
+ * Fica desligado por padrão para não mudar as páginas de demonstração (/macedo-keenan, /demo).
+ */
+export function ReportDocument({ report: r, conclusion, opinion, showScope = false }: { report: ReportModel; conclusion: Conclusion; opinion: OpinionData | null; showScope?: boolean }) {
   return (
     <article className="report rounded-xl border border-line bg-white p-4 text-[13px] sm:p-8 leading-relaxed text-[#1f2433] print:rounded-none print:border-0 print:p-0">
       <header className="mb-6 border-b-2 border-[#5b3fa0] pb-4 text-center">
@@ -121,6 +125,49 @@ export function ReportDocument({ report: r, conclusion, opinion }: { report: Rep
           <H2 n={r.sections.length + (r.findings.length ? 3 : 2)}>Documentos adicionais (fora do checklist)</H2>
           <ul className="list-disc pl-6">
             {r.extraDocuments.map((d, i) => <li key={i}><strong>{d.name}</strong>: {d.description}</li>)}
+          </ul>
+        </section>
+      )}
+
+      {showScope && r.sources && (
+        <section className="mb-5">
+          <H2>Fontes consultadas</H2>
+          {r.sources.length === 0 ? (
+            <p>Nenhum documento ou consulta registrado até a data deste relatório.</p>
+          ) : (
+            <div className="overflow-x-auto print:overflow-visible">
+              <table className="w-full min-w-[30rem] border-collapse text-xs print:min-w-0">
+                <thead>
+                  <tr className="bg-[#5b3fa0] text-left text-white">
+                    <th className="border border-[#d9dce6] px-2 py-1.5">Documento</th>
+                    <th className="border border-[#d9dce6] px-2 py-1.5">Origem</th>
+                    <th className="w-24 border border-[#d9dce6] px-2 py-1.5">Data</th>
+                    <th className="w-32 border border-[#d9dce6] px-2 py-1.5">Natureza</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.sources.map((x, i) => (
+                    <tr key={i} className="align-top odd:bg-[#f6f4fb]">
+                      <td className="border border-[#d9dce6] px-2 py-1.5">{x.name}</td>
+                      <td className="border border-[#d9dce6] px-2 py-1.5">{x.origin}</td>
+                      <td className="border border-[#d9dce6] px-2 py-1.5">{x.date ? formatDate(x.date) : "—"}</td>
+                      <td className="border border-[#d9dce6] px-2 py-1.5">
+                        {x.kind === "certidao_oficial" ? "Certidão oficial" : x.kind === "visualizacao" ? "Visualização (sem valor de certidão)" : "Documento anexado"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {showScope && r.limitations && (
+        <section className="mb-5 break-inside-avoid">
+          <H2>Limitações da análise</H2>
+          <ul className="list-disc pl-6">
+            {r.limitations.map((x, i) => <li key={i}>{x}</li>)}
           </ul>
         </section>
       )}

@@ -3,7 +3,7 @@
  * resumo executivo, pontos de atenção, tabela por seção, documentos fora do
  * checklist, conclusão sugerida e recomendações. Função pura.
  */
-import { buildChecklist, summarize, unassignedDocuments, type ChecklistEntry, type DocView } from "@/lib/checklist/build";
+import { buildChecklist, latestVersions, summarize, unassignedDocuments, type ChecklistEntry, type DocView } from "@/lib/checklist/build";
 import { VALIDITY_LABEL } from "@/lib/checklist/validity";
 import type { AnalysisRow, AssetRow, DealItemRow, DealRow, DocumentRow, FindingRow, PartyRow, TemplateItemRow } from "@/lib/db-types";
 import { DOC_RESULT_LABEL } from "@/lib/documents";
@@ -58,7 +58,13 @@ export type ReportModel = {
   findings: FindingRow[];
   suggestedConclusion: Conclusion;
   recommendations: string[];
+  /** Fontes consultadas (MK-01 Fase 6). Ausente em versões salvas antes de 14/11/2026. */
+  sources?: ReportSource[];
+  /** Limitações da análise (MK-01 Fase 6). Ausente em versões antigas. */
+  limitations?: string[];
 };
+
+export type ReportSource = { name: string; origin: string; date: string | null; kind: "certidao_oficial" | "visualizacao" | "documento_anexado" };
 
 /** O que uma versão do relatório guarda (congelado no momento em que foi salva). */
 export type ReportSnapshot = {
@@ -170,7 +176,29 @@ export function buildReport(input: ReportInput, today: string): ReportModel {
     recommendations.push("Incluir no contrato declarações e garantias, cláusula de indenização e condições suspensivas cobrindo os itens em aberto.");
   }
 
+  const latestDocs = latestVersions(input.documents);
+  const sources: ReportSource[] = latestDocs
+    .map((d) => ({
+      name: d.doc_type ?? d.file_name,
+      origin: d.issuer ?? (d.source === "api" ? "consulta online" : "enviado pela equipe"),
+      date: d.issued_at ?? (d.created_at ? d.created_at.slice(0, 10) : null),
+      kind: (d.is_preview ? "visualizacao" : d.source === "api" ? "certidao_oficial" : "documento_anexado") as ReportSource["kind"],
+    }))
+    .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, "pt-BR"));
+
+  const proposed = openFindings.filter((f) => f.status === "proposto").length;
+  const limitations = [
+    "Análise documental preliminar, restrita às fontes listadas acima e às informações cadastradas; não substitui a conferência dos originais, diligências presenciais nem o parecer jurídico assinado.",
+    "A ausência de registro numa consulta não comprova ausência de risco: a cobertura se limita às fontes, jurisdições e períodos efetivamente consultados.",
+    ...(sources.some((x) => x.kind === "visualizacao") ? ["Visualizações da consulta prévia não têm valor de certidão; antes da assinatura do negócio devem ser substituídas pelas certidões oficiais."] : []),
+    ...(latestDocs.some((d) => /simulad/i.test(`${d.issuer ?? ""} ${d.doc_type ?? ""}`)) ? ["Há documentos FICTÍCIOS gerados pelo provedor simulado (demonstração), sem valor legal."] : []),
+    ...(proposed ? [`${proposed === 1 ? "1 apontamento foi sugerido" : `${proposed} apontamentos foram sugeridos`} automaticamente e ainda não ${proposed === 1 ? "foi confirmado" : "foram confirmados"} pela equipe.`] : []),
+    "Leituras e apontamentos feitos com apoio de IA são sugestões; a conclusão é do responsável técnico.",
+  ];
+
   return {
+    sources,
+    limitations,
     dealTitle: input.deal.title,
     dealKind: input.deal.kind,
     orgName: input.orgName,

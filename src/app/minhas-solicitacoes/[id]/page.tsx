@@ -34,7 +34,7 @@ async function ClientReport({ params }: { params: PageProps<"/minhas-solicitacoe
       <p className="mb-4 rounded-md border border-ok px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-ok">
         Versão {v.version} · assinada em {formatDateTime(v.signed_at)}
       </p>
-      <ReportDocument report={v.snapshot.report} conclusion={v.snapshot.conclusion} opinion={v.snapshot.opinion} />
+      <ReportDocument report={v.snapshot.report} conclusion={v.snapshot.conclusion} opinion={v.snapshot.opinion} showScope />
     </div>
   );
 }

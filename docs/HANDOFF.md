@@ -100,6 +100,8 @@ Reverter os três commits da branch e, se as migrações tiverem sido aplicadas,
 
 **Atenção:** a branch **não pode ir ao `main` antes das migrações**: abrir documento (M12), anexar documento (coluna `supersedes_id`, M14) e a tela de membros (M11) dependem delas.
 
+**Relatório (Fase 6), sem migração:** seções "Fontes consultadas" (documento, origem, data, natureza: certidão oficial, visualização ou anexo) e "Limitações da análise" (inclui "ausência de registro não comprova ausência de risco", aviso de documentos fictícios do provedor simulado e de apontamentos ainda propostos). Ligadas por `showScope` só nas telas do sistema; `/macedo-keenan` e `/demo` não mudam (verificado: hash do texto igual).
+
 ### Próximas fatias
 
 - IA com citação por página e incerteza (Fase 4) — depende da chave Anthropic e da avaliação do fluxo de dados.

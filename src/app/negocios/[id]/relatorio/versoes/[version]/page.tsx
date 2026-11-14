@@ -61,7 +61,7 @@ async function ReportVersion({ params }: { params: PageProps<"/negocios/[id]/rel
       <p className={`mb-4 rounded-md border px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide ${v.status === "assinado" ? "border-ok text-ok" : "border-warn text-warn"}`}>
         {stamp}
       </p>
-      <ReportDocument report={v.snapshot.report} conclusion={v.snapshot.conclusion} opinion={v.snapshot.opinion} />
+      <ReportDocument report={v.snapshot.report} conclusion={v.snapshot.conclusion} opinion={v.snapshot.opinion} showScope />
     </div>
   );
 }
