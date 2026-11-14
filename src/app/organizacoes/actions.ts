@@ -57,7 +57,7 @@ export async function acceptInvitation(invitationId: string): Promise<MemberActi
   const supabase = await createClient();
   const { error } = await supabase.rpc("accept_invitation", { p_id: invitationId });
   if (error) return { error: "Não foi possível aceitar: o convite expirou ou é de outro e-mail." };
-  revalidatePath("/");
+  revalidatePath("/organizacoes");
   return { ok: true };
 }
 
@@ -89,7 +89,7 @@ export async function removeMember(orgId: string, userId: string): Promise<Membe
     .eq("user_id", userId);
   if (error?.code === "23514") return { error: "A organização precisa de ao menos um dono." };
   if (error || count === 0) return { error: "Você não tem permissão para remover esse membro." };
-  if (userId === me) redirect("/");
+  if (userId === me) redirect("/organizacoes");
   revalidatePath(`/organizacoes/${orgId}`);
   return { ok: true };
 }

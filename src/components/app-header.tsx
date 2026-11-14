@@ -27,7 +27,7 @@ const HREF: Record<Section, string> = {
   painel: "/painel",
   negocios: "/negocios",
   solicitacoes: "/minhas-solicitacoes",
-  organizacoes: "/",
+  organizacoes: "/organizacoes",
 };
 
 function NavLink({ section, active }: { section: Section; active: boolean }) {

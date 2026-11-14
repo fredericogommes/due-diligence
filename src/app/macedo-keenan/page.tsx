@@ -63,7 +63,10 @@ export default function MacedoKeenanDemoPage() {
               </a>
             ))}
           </nav>
-          <a href="#portal" className="mk-btn-gold hidden shrink-0 whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold sm:inline-block">Iniciar due diligence</a>
+          <div className="flex shrink-0 items-center gap-2">
+            <a href="/login" className="whitespace-nowrap rounded-md border border-white/40 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">Entrar</a>
+            <a href="#portal" className="mk-btn-gold hidden shrink-0 whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold sm:inline-block">Iniciar due diligence</a>
+          </div>
         </div>
         <nav className="flex gap-4 overflow-x-auto px-4 pb-2 text-sm text-[#e9e4da] lg:hidden">
           {NAV.map((n) => (
@@ -92,7 +95,8 @@ export default function MacedoKeenanDemoPage() {
               são emitidas com um único boleto.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#portal" className="mk-btn-gold rounded-md px-5 py-3 text-sm font-semibold">Ver demonstração</a>
+              <a href="/login?perfil=cliente" className="mk-btn-gold rounded-md px-5 py-3 text-sm font-semibold">Solicitar due diligence</a>
+              <a href="#portal" className="rounded-md border border-[var(--mk-brass)] px-5 py-3 text-sm font-semibold text-[var(--mk-brass)] hover:bg-white/10">Ver demonstração</a>
               <a href="#como-funciona" className="rounded-md border border-white/40 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">Como funciona</a>
             </div>
           </div>

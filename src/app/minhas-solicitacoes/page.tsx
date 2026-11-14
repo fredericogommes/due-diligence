@@ -72,7 +72,7 @@ async function Requests() {
     return (
       <p className="rounded-xl border border-line bg-surface p-6 text-sm text-subtle">
         Você ainda não é cliente de nenhum escritório. Peça ao escritório um convite para o seu e-mail; ele aparece em{" "}
-        <Link href="/" className="text-brand underline">Organizações</Link>.
+        <Link href="/organizacoes" className="text-brand underline">Organizações</Link>.
       </p>
     );
   }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { buttonClass, FormMessage } from "@/components/ui";
-import { acceptInvitation } from "./organizacoes/actions";
+import { acceptInvitation } from "./actions";
 
 export function PendingInvitations({ invitations }: { invitations: { id: string; label: string }[] }) {
   const [pending, start] = useTransition();

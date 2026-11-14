@@ -23,5 +23,10 @@ export async function GET(request: NextRequest) {
     ok = !(await supabase.auth.verifyOtp({ token_hash: tokenHash, type })).error;
   }
 
+  // Conta confirmada pela área do cliente: entra como cliente do escritório público (se não for da equipe).
+  if (ok) {
+    const { data: roles } = await supabase.from("memberships").select("role").returns<{ role: string }[]>();
+    if (!(roles ?? []).length) await supabase.rpc("join_public_client_org");
+  }
   return NextResponse.redirect(new URL(ok ? next : "/login?erro=link", request.url));
 }

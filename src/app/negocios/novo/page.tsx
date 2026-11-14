@@ -29,7 +29,7 @@ async function FormLoader() {
   if (!orgs?.length) {
     return (
       <p className="text-sm text-subtle">
-        Crie uma organização em <Link href="/" className="text-brand underline">Organizações</Link> primeiro.
+        Crie uma organização em <Link href="/organizacoes" className="text-brand underline">Organizações</Link> primeiro.
       </p>
     );
   }

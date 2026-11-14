@@ -19,6 +19,6 @@ export async function createOrganization(_prev: OrgState, form: FormData): Promi
   });
   if (error) return { error: "Não foi possível criar a organização." };
 
-  revalidatePath("/");
+  revalidatePath("/organizacoes");
   return { ok: true };
 }

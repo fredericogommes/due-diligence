@@ -43,7 +43,7 @@ async function DealList() {
     if ((clientOrgs as unknown[] | null)?.length) redirect("/minhas-solicitacoes");
     return (
       <p className="rounded-xl border border-line bg-surface p-6 text-sm text-subtle">
-        Crie uma organização em <Link href="/" className="text-brand underline">Organizações</Link> antes de cadastrar negócios.
+        Crie uma organização em <Link href="/organizacoes" className="text-brand underline">Organizações</Link> antes de cadastrar negócios.
       </p>
     );
   }

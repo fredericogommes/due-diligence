@@ -117,3 +117,19 @@ Reverter os três commits da branch e, se as migrações tiverem sido aplicadas,
 - `feat/mk-entrega` juntada ao `main` por fast-forward (commit `0a62d99`); CI verde; Vercel publicou em produção.
 - Produção conferida: Gestão, Quadro e Negócios sem rolagem lateral; `/macedo-keenan` com o mesmo hash de texto e 16 links em 390/768/1440.
 - Aviso do Supabase em aberto: proteção contra senhas vazadas desligada (Auth → Password security), ajuste de painel do dono.
+
+---
+
+## Ciclo 2026-11-14 (tarde) — página principal MK e login por perfil (pedido do Fred)
+
+| Campo | Valor |
+|---|---|
+| Branch | `feat/mk-portal-login` (local; base `9e67d36`) |
+| Migração | `20261114150000_m15_cadastro_publico_cliente.sql` (**não aplicada**: aguardando autorização) |
+
+- `/` = página da MK (reexporta `/macedo-keenan`, que continua no ar). A antiga página de organizações foi para `/organizacoes` (links ajustados).
+- Cabeçalho MK com "Entrar"; herói com "Solicitar due diligence" (`/login?perfil=cliente`).
+- `/login` no visual MK: "Sou cliente" (entrar ou criar conta) e "Equipe do escritório" (só entrar). O servidor decide o destino pelos vínculos reais: equipe → `/gestao`; cliente → `/minhas-solicitacoes`; conta de cliente na aba da equipe é recusada.
+- M15: `organizations.accepts_public_clients` + `join_public_client_org()`. Cliente que cria conta vira cliente do escritório marcado. Equipe não vira cliente.
+- Testes: 200 passando; no navegador, os 4 cenários de login e a raiz MK conferidos.
+- Pendente: aplicar M15; marcar o escritório de demonstração com `accepts_public_clients = true` (e renomear para "Macedo & Keenan Advogados (demonstração)"); publicar. Cadastro de cliente novo por e-mail real ainda depende de SMTP próprio ou de desligar "Confirm email" no Supabase.
