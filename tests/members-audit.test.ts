@@ -37,9 +37,11 @@ describe("versões do relatório", () => {
     expect(nextReportStatus("assinado")).toBeNull();
   });
 
-  it("corretor não assina", () => {
-    expect(canSignReports("advogado")).toBe(true);
-    expect(canSignReports("corretor")).toBe(false);
+  it("só revisor jurídico explícito assina (papel sozinho não basta)", () => {
+    expect(canSignReports({ role: "advogado", legal_reviewer: true })).toBe(true);
+    expect(canSignReports({ role: "owner", legal_reviewer: false })).toBe(false);
+    expect(canSignReports({ role: "admin", legal_reviewer: false })).toBe(false);
+    expect(canSignReports({ role: "cliente", legal_reviewer: true })).toBe(false);
     expect(canSignReports(null)).toBe(false);
   });
 });

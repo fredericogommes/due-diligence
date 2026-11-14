@@ -109,7 +109,7 @@ describe("versões do relatório", () => {
   it("corretor não revisa; advogado revisa e depois assina", async () => {
     await expect(
       asUser(db, DORA, (q) => q("update public.report_versions set status = 'revisado' where deal_id = $1 and version = 1", [dealId])),
-    ).rejects.toThrow(/advogado/);
+    ).rejects.toThrow(/revisor jurídico/);
     await expect(
       asUser(db, BETO, (q) => q("update public.report_versions set status = 'assinado' where deal_id = $1 and version = 1", [dealId])),
     ).rejects.toThrow(/inválida/);
@@ -123,7 +123,7 @@ describe("versões do relatório", () => {
 
   it("versão assinada não volta atrás nem é apagada; rascunho pode ser apagado", async () => {
     await expect(
-      asUser(db, ANA, (q) => q("update public.report_versions set status = 'rascunho' where deal_id = $1 and version = 1", [dealId])),
+      asUser(db, BETO, (q) => q("update public.report_versions set status = 'rascunho' where deal_id = $1 and version = 1", [dealId])),
     ).rejects.toThrow(/inválida/);
     const apagadaAssinada = await asUser(db, ANA, (q) => q("delete from public.report_versions where deal_id = $1 and version = 1 returning id", [dealId]));
     expect(apagadaAssinada).toHaveLength(0);

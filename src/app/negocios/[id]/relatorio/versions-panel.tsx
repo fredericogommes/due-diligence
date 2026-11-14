@@ -95,7 +95,7 @@ export function VersionsPanel({ dealId, versions, canSign }: { dealId: string; v
           })}
         </ul>
       )}
-      {!canSign && <p className="text-xs text-subtle">Só advogado, administrador ou dono revisa e assina versões.</p>}
+      {!canSign && <p className="text-xs text-subtle">Só quem tem a permissão de revisor jurídico revisa e assina versões (o dono concede na página da organização).</p>}
       <FormMessage error={error} />
     </section>
   );

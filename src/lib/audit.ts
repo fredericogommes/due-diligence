@@ -63,6 +63,7 @@ const FIELD: Record<string, string> = {
   signer_registration: "registro profissional",
   protocol: "protocolo",
   stage: "etapa",
+  legal_reviewer: "permissão de revisor jurídico",
   assignee_id: "responsável",
   client_id: "cliente",
   boleto_url: "boleto",

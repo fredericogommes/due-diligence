@@ -93,3 +93,20 @@ export async function removeMember(orgId: string, userId: string): Promise<Membe
   revalidatePath(`/organizacoes/${orgId}`);
   return { ok: true };
 }
+
+/** Concede ou retira a permissão de revisor jurídico (só o dono; o banco confere). */
+export async function setLegalReviewer(orgId: string, userId: string, value: boolean): Promise<MemberActionState> {
+  if (!(await getCurrentUserId())) return SESSION_EXPIRED;
+  const parsed = z.object({ orgId: z.uuid(), userId: z.uuid(), value: z.boolean() }).safeParse({ orgId, userId, value });
+  if (!parsed.success) return { error: "Dados inválidos." };
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("memberships")
+    .update({ legal_reviewer: parsed.data.value }, { count: "exact" })
+    .eq("org_id", orgId)
+    .eq("user_id", userId);
+  if (error?.code === "42501") return { error: "Só o dono concede ou retira a permissão de revisor jurídico." };
+  if (error || count === 0) return { error: "Não foi possível alterar a permissão." };
+  revalidatePath(`/organizacoes/${orgId}`);
+  return { ok: true };
+}

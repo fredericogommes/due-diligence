@@ -41,7 +41,7 @@ async function Report({ params }: { params: PageProps<"/negocios/[id]/relatorio"
       .eq("deal_id", id)
       .order("version", { ascending: false })
       .returns<VersionRow[]>(),
-    supabase.from("memberships").select("role").eq("org_id", data.deal.org_id).eq("user_id", userId ?? "").maybeSingle<{ role: MemberRole }>(),
+    supabase.from("memberships").select("role, legal_reviewer").eq("org_id", data.deal.org_id).eq("user_id", userId ?? "").maybeSingle<{ role: MemberRole; legal_reviewer: boolean }>(),
     supabase.from("profiles").select("id, full_name").returns<{ id: string; full_name: string | null }[]>(),
   ]);
   const names = new Map((profiles ?? []).map((p) => [p.id, p.full_name ?? "Sem nome"]));
@@ -72,7 +72,7 @@ async function Report({ params }: { params: PageProps<"/negocios/[id]/relatorio"
       </div>
 
       <div className="mb-6 print:hidden">
-        <VersionsPanel dealId={id} versions={versionItems} canSign={canSignReports(membership?.role)} />
+        <VersionsPanel dealId={id} versions={versionItems} canSign={canSignReports(membership)} />
       </div>
 
       <p className="mb-2 text-xs text-subtle print:hidden">Abaixo, o relatório com os dados de agora (ainda não congelado numa versão).</p>

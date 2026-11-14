@@ -3,7 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { buttonClass, Field, FormMessage, inputClass, SubmitButton } from "@/components/ui";
 import { INVITE_ROLES, memberPermissions, ROLE_LABEL, type MemberRole, type MemberView } from "@/lib/members";
-import { cancelInvitation, changeMemberRole, inviteMember, removeMember, type MemberActionState } from "../actions";
+import { cancelInvitation, changeMemberRole, inviteMember, removeMember, setLegalReviewer, type MemberActionState } from "../actions";
 
 export function MemberList({ orgId, me, members }: { orgId: string; me: { userId: string; role: MemberRole }; members: MemberView[] }) {
   const [pending, start] = useTransition();
@@ -19,6 +19,7 @@ export function MemberList({ orgId, me, members }: { orgId: string; me: { userId
               <div>
                 <p className="font-medium">{m.full_name ?? m.email}{m.user_id === me.userId && <span className="text-subtle"> (você)</span>}</p>
                 <p className="text-xs text-subtle">{m.email}</p>
+                {m.legal_reviewer && <span className="mt-1 inline-block rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold text-brand">Revisor jurídico</span>}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {can.changeRole ? (
@@ -36,6 +37,21 @@ export function MemberList({ orgId, me, members }: { orgId: string; me: { userId
                   </select>
                 ) : (
                   <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-subtle">{ROLE_LABEL[m.role]}</span>
+                )}
+                {me.role === "owner" && m.role !== "cliente" && (
+                  <label className="flex items-center gap-1.5 text-xs text-text" title="Pode revisar e assinar versões do relatório">
+                    <input
+                      type="checkbox"
+                      checked={m.legal_reviewer}
+                      disabled={pending}
+                      onChange={(e) => {
+                        const v = e.target.checked;
+                        start(async () => setError((await setLegalReviewer(orgId, m.user_id, v)).error));
+                      }}
+                      className="accent-[var(--brand)]"
+                    />
+                    Revisor jurídico
+                  </label>
                 )}
                 {(can.remove || can.leave) && (
                   <button

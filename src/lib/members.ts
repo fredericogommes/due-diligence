@@ -18,6 +18,8 @@ export type MemberView = {
   email: string;
   role: MemberRole;
   created_at: string;
+  /** Permissão explícita de revisor jurídico (só o dono concede). */
+  legal_reviewer: boolean;
 };
 
 /** Equipe = todos menos o cliente. */
@@ -62,7 +64,11 @@ export function nextReportStatus(status: ReportStatus): ReportStatus | null {
   return null;
 }
 
-/** Quem pode revisar ou assinar uma versão. */
-export function canSignReports(role: MemberRole | null | undefined): boolean {
-  return role === "owner" || role === "admin" || role === "advogado";
+/**
+ * Quem pode revisar ou assinar uma versão: só quem tem a permissão explícita de
+ * revisor jurídico (o papel sozinho não basta — administrador não é revisor
+ * automaticamente; ver ADR-0002). Espelha public.is_legal_reviewer.
+ */
+export function canSignReports(m: { role: MemberRole; legal_reviewer: boolean } | null | undefined): boolean {
+  return !!m && m.role !== "cliente" && m.legal_reviewer;
 }

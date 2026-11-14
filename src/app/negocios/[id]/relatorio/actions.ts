@@ -75,7 +75,7 @@ export async function advanceReportVersion(dealId: string, versionId: string, st
     .update({ status: parsed.data.status }, { count: "exact" })
     .eq("id", versionId)
     .eq("deal_id", dealId);
-  if (error?.code === "42501") return { error: "Só advogado, administrador ou dono revisa ou assina." };
+  if (error?.code === "42501") return { error: "Só quem tem a permissão de revisor jurídico revisa ou assina." };
   if (error || count === 0) return { error: "Não foi possível mudar o status (revise antes de assinar)." };
   revalidatePath(`/negocios/${dealId}/relatorio`);
   return { ok: true };
