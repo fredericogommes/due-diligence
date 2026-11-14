@@ -98,7 +98,7 @@ export function FindingsSection({ dealId, findings, itemOptions }: { dealId: str
                 <p className="text-[11px] text-subtle">
                   <span className={`mr-1 rounded px-1 py-px font-semibold ${findingStatusOf(f) === "proposto" ? "bg-warn/15 text-warn" : "bg-muted text-text"}`}>
                     {FINDING_STATUS_LABEL[findingStatusOf(f)]}
-                  </span>
+                  </span>{" "}
                   {f.source === "ia" ? "Leitura por IA" : f.source === "consulta" ? "Consulta prévia" : "Manual"}
                   {f.deal_item_id && itemLabel.get(f.deal_item_id) ? ` · ${itemLabel.get(f.deal_item_id)}` : ""}
                 </p>
