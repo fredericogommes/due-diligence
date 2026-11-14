@@ -10,6 +10,8 @@ import { canSignReports, type MemberRole } from "@/lib/members";
 import { createClient, getCurrentUserId } from "@/lib/supabase/server";
 import { OpinionEditor, type OpinionData } from "./opinion-editor";
 import { VersionsPanel, type VersionItem } from "./versions-panel";
+import { StaleBanner } from "@/components/stale-banner";
+import { staleSince } from "@/lib/report/staleness";
 import { PrintButton } from "./print-button";
 import { ReportDocument } from "./report-document";
 
@@ -57,6 +59,7 @@ async function Report({ params }: { params: PageProps<"/negocios/[id]/relatorio"
     signedLabel: v.signed_at ? `por ${who(v.signed_by)} em ${formatDateTime(v.signed_at)}` : null,
   }));
 
+  const stale = staleSince(versions ?? [], data);
   const report = buildReport(data, todaySaoPaulo());
   const conclusion = opinion?.conclusion ?? report.suggestedConclusion;
 
@@ -71,6 +74,7 @@ async function Report({ params }: { params: PageProps<"/negocios/[id]/relatorio"
         <OpinionEditor dealId={id} suggested={report.suggestedConclusion} opinion={opinion ?? null} />
       </div>
 
+      {stale && <div className="mb-4"><StaleBanner s={stale} /></div>}
       <div className="mb-6 print:hidden">
         <VersionsPanel dealId={id} versions={versionItems} canSign={canSignReports(membership)} />
       </div>

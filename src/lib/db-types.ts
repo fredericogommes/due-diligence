@@ -28,6 +28,7 @@ export type PartyRow = {
   marital_status: MaritalStatus | null;
   property_regime: PropertyRegime | null;
   notes: string | null;
+  created_at?: string;
 };
 
 export type AssetRow = {
@@ -43,6 +44,7 @@ export type AssetRow = {
   municipio: string | null;
   uf: string | null;
   cnpj: string | null;
+  created_at?: string;
 };
 
 export type TemplateItemRow = {

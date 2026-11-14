@@ -15,6 +15,8 @@ import { AssetsSection } from "./assets-section";
 import { ChecklistView } from "./checklist-view";
 import { DealActions } from "./deal-actions";
 import { DealPeople } from "./deal-people";
+import { StaleBanner } from "@/components/stale-banner";
+import { staleSince } from "@/lib/report/staleness";
 import { createClient } from "@/lib/supabase/server";
 import { STAGE_LABEL, type Stage } from "@/lib/board";
 import type { MemberView } from "@/lib/members";
@@ -48,10 +50,12 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
   if (!data) notFound();
   const { deal, parties, assets, items, templateItems, orgName, documents, latestAnalysis, findings, certRequests } = data;
   const supabase = await createClient();
-  const [{ data: memberData }, { data: extra }] = await Promise.all([
+  const [{ data: memberData }, { data: extra }, { data: versionRows }] = await Promise.all([
     supabase.rpc("org_members", { p_org: deal.org_id }),
     supabase.from("deals").select("stage, assignee_id, client_id").eq("id", deal.id).maybeSingle<{ stage: Stage; assignee_id: string | null; client_id: string | null }>(),
+    supabase.from("report_versions").select("version, status, created_at").eq("deal_id", deal.id).returns<{ version: number; status: string; created_at: string }[]>(),
   ]);
+  const stale = staleSince(versionRows ?? [], { documents, findings, parties, assets });
   const people = ((memberData as MemberView[] | null) ?? []).map((m) => ({ id: m.user_id, name: m.full_name ?? m.email, role: m.role }));
   const ai = { analyses: latestAnalysis, aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY) };
   const today = todaySaoPaulo();
@@ -123,6 +127,8 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
         </div>
         <DealActions dealId={deal.id} status={deal.status} />
       </section>
+
+      {stale && <StaleBanner s={stale} href={`/negocios/${deal.id}/relatorio`} />}
 
       <OnlineCertificates dealId={deal.id} summary={online} boletos={boletos} />
 
