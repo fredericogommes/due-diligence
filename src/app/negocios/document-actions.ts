@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { DOCUMENTS_BUCKET, isPathInDeal } from "@/lib/documents";
+import { DOCUMENTS_BUCKET, isPathInDeal, MAX_DOCUMENT_BYTES } from "@/lib/documents";
+import { checkUploadedFile } from "@/lib/file-signature";
 import { createClient, getCurrentUserId } from "@/lib/supabase/server";
 import { documentMetaSchema, firstError, registerDocumentSchema } from "@/lib/validation";
 
@@ -33,10 +34,15 @@ export async function registerDocument(input: unknown): Promise<DocActionState> 
   if (!deal) return { error: "Negócio não encontrado." };
   if (!isPathInDeal(d.path, deal.org_id, d.dealId)) return { error: "Caminho de arquivo inválido." };
 
-  const folder = d.path.slice(0, d.path.lastIndexOf("/"));
-  const name = d.path.slice(d.path.lastIndexOf("/") + 1);
-  const { data: listed } = await supabase.storage.from(DOCUMENTS_BUCKET).list(folder, { search: name, limit: 1 });
-  if (!listed?.some((o) => o.name === name)) return { error: "O arquivo não chegou ao armazenamento. Tente enviar de novo." };
+  // Confere o arquivo de verdade no servidor (MK-01 M04/G04): existe, tamanho, tipo
+  // real pelos primeiros bytes e hash. Não confia no que o navegador declarou.
+  const { data: blob } = await supabase.storage.from(DOCUMENTS_BUCKET).download(d.path);
+  if (!blob) return { error: "O arquivo não chegou ao armazenamento. Tente enviar de novo." };
+  const check = await checkUploadedFile(new Uint8Array(await blob.arrayBuffer()), d, MAX_DOCUMENT_BYTES);
+  if (!check.ok) {
+    await supabase.storage.from(DOCUMENTS_BUCKET).remove([d.path]);
+    return { error: `Arquivo recusado: ${check.reason}` };
+  }
 
   const { data, error } = await supabase
     .from("documents")
@@ -45,9 +51,9 @@ export async function registerDocument(input: unknown): Promise<DocActionState> 
       deal_item_id: d.dealItemId ?? null,
       storage_path: d.path,
       file_name: d.fileName,
-      mime_type: d.mimeType,
-      size_bytes: d.sizeBytes,
-      sha256: d.sha256 ?? null,
+      mime_type: check.mime,
+      size_bytes: check.size,
+      sha256: check.sha256,
       doc_type: d.docType ?? null,
       issuer: d.issuer ?? null,
       issued_at: d.issuedAt ?? null,

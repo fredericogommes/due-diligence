@@ -59,3 +59,21 @@ Reverter os três commits da branch e, se as migrações tiverem sido aplicadas,
 1. Fase 1 (resto): convite com expiração já existe; falta revogar convites/sessões ao remover membro (sessão Supabase segue válida, mas a RLS já nega dados) e permissões de gestor/auditor.
 2. Fase 2: transições de etapa como comandos com pré-condições; operação com múltiplos imóveis já existe (bens N por negócio).
 3. Fase 3: `document_versions` imutáveis, validação real de MIME (assinatura do arquivo), quarentena, categorias e retenção.
+
+---
+
+## Ciclo 2026-11-14 (cont.) — MK Fase 3, fatia 1: validação real do arquivo enviado
+
+| Campo | Valor |
+|---|---|
+| Responsável | Claude Code |
+| Branch | `feat/mk-f3-documentos` (local, **empilhada** sobre `feat/mk-f1-isolamento`; não enviada) |
+| Módulos | documentos (registro de upload) |
+
+**Feito:** `registerDocument` baixa o objeto recém-enviado e confere no servidor tamanho, **tipo real pelos primeiros bytes** (PDF, JPG, PNG, WEBP) e hash SHA-256; grava tipo, tamanho e hash calculados no servidor; recusa e apaga do Storage o que não confere (`src/lib/file-signature.ts`). Sem migração.
+
+**Testes:** `tests/file-signature.test.ts` (6). No navegador contra o Supabase: HTML renomeado para `.pdf` foi recusado e não ficou no Storage nem no banco; PDF verdadeiro anexado com hash gravado.
+
+**Reversão:** reverter o commit (só código).
+
+**Próximo na Fase 3:** `document_versions` imutáveis (nova versão sem apagar a anterior), quarentena antes de liberar para IA, categorias documentais e política de retenção (depende do jurídico da MK).
