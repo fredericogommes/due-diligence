@@ -42,7 +42,7 @@ async function History({ params }: { params: PageProps<"/negocios/[id]/historico
         <Link href="/negocios" className="text-sm text-subtle hover:text-brand">← Negócios</Link>
       )}
       <div>
-        <h1 className="text-2xl font-bold text-ink">Histórico{deal ? `: ${deal.title}` : " (negócio excluído)"}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">Histórico{deal ? `: ${deal.title}` : " (negócio excluído)"}</h1>
         <p className="text-sm text-subtle">
           Quem fez o quê e quando. O histórico registra quais campos mudaram, mas não guarda os valores (para não duplicar dados pessoais).
         </p>

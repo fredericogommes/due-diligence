@@ -16,7 +16,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-12">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-ink">Due Diligence</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">Due Diligence</h1>
         <p className="mt-1 text-sm text-subtle">Relatório preliminar de negócios imobiliários e societários</p>
       </div>
       <Suspense>

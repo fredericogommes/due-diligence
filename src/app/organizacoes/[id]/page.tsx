@@ -59,7 +59,7 @@ async function Organization({ params }: { params: PageProps<"/organizacoes/[id]"
   return (
     <div className="mt-2 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-ink">{org.name}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{org.name}</h1>
         <p className="text-sm text-subtle">Seu papel: {myRole ? ROLE_LABEL[myRole] : "—"}</p>
       </div>
 

@@ -44,7 +44,7 @@ async function Home() {
     <AppHeader current="organizacoes" />
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-ink">Organizações</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">Organizações</h1>
         <p className="text-sm text-subtle">Olá, {profile?.full_name ?? "bem-vindo"}.</p>
       </div>
 

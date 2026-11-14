@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { FormMessage } from "@/components/ui";
-import { OWNER_LABEL, STAGE_LABEL, STAGES, type Stage, type TaskOwner } from "@/lib/board";
+import { STAGE_LABEL, STAGES, type Aging, type Stage, type TaskOwner } from "@/lib/board";
+import { AgingBadge, OwnerBadge } from "@/app/gestao/badges";
 import { DEAL_KIND_LABEL, formatBRL, type DealKind } from "@/lib/domain";
 import { assignDeal, moveDeal } from "./actions";
 
@@ -18,19 +19,13 @@ export type Card = {
   assigneeId: string | null;
   assigneeName: string | null;
   owner: TaskOwner;
+  aging: Aging;
   openFindings: number;
   staff: { id: string; name: string }[];
   updatedAt: string;
 };
 
-const OWNER_STYLE: Record<TaskOwner["who"], string> = {
-  ia: "bg-brand/15 text-brand",
-  humano: "bg-warn/15 text-warn",
-  cliente: "bg-ok/15 text-ok",
-  ninguem: "bg-muted text-subtle",
-};
-
-type Filter = "todos" | "humano" | "ia" | "cliente" | "meus";
+type Filter = "todos" | "humano" | "ia" | "cliente" | "meus" | "atrasados";
 
 export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
   const [cards, setCards] = useState(initial);
@@ -43,7 +38,7 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
   const visible = useMemo(
     () =>
       cards.filter((c) =>
-        filter === "todos" ? true : filter === "meus" ? c.assigneeId === me : c.owner.who === filter,
+        filter === "todos" ? true : filter === "meus" ? c.assigneeId === me : filter === "atrasados" ? c.aging.state === "atrasado" : c.owner.who === filter,
       ),
     [cards, filter, me],
   );
@@ -52,6 +47,7 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
     ia: cards.filter((c) => c.owner.who === "ia").length,
     cliente: cards.filter((c) => c.owner.who === "cliente").length,
     meus: cards.filter((c) => c.assigneeId === me).length,
+    atrasados: cards.filter((c) => c.aging.state === "atrasado").length,
   };
 
   const move = (id: string, stage: Stage) => {
@@ -102,6 +98,7 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
         {filterButton("ia", `Com a IA (${counts.ia})`)}
         {filterButton("cliente", `Com o cliente (${counts.cliente})`)}
         {filterButton("meus", `Meus (${counts.meus})`)}
+        {filterButton("atrasados", `Atrasados (${counts.atrasados})`)}
         {pending && <span className="text-xs text-subtle">Salvando…</span>}
       </div>
       <FormMessage error={error} />
@@ -147,9 +144,7 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
                       <Link href={`/negocios/${c.id}`} className="min-w-0 break-words font-medium text-ink hover:text-brand hover:underline">
                         {c.title}
                       </Link>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${OWNER_STYLE[c.owner.who]}`}>
-                        {OWNER_LABEL[c.owner.who]}
-                      </span>
+                      <OwnerBadge owner={c.owner} />
                     </div>
                     <p className="text-xs text-subtle">
                       {DEAL_KIND_LABEL[c.kind]}
@@ -158,13 +153,14 @@ export function Kanban({ cards: initial, me }: { cards: Card[]; me: string }) {
                     </p>
                     {c.clientName && <p className="text-xs">Cliente: {c.clientName}</p>}
                     <p className="text-xs text-text">{c.owner.reason}</p>
+                    <AgingBadge aging={c.aging} />
                     {c.openFindings > 0 && <p className="text-xs text-danger">{c.openFindings} apontamento(s) em aberto</p>}
-                    <div className="flex items-center gap-2 border-t border-line pt-2">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line pt-2">
                       <select
                         aria-label={`Responsável por ${c.title}`}
                         value={c.assigneeId ?? ""}
                         onChange={(e) => assign(c.id, e.target.value || null)}
-                        className="min-w-0 flex-1 rounded-md border border-line bg-surface px-1.5 py-1 text-xs"
+                        className="min-w-32 flex-1 rounded-md border border-line bg-surface px-1.5 py-1 text-xs"
                       >
                         <option value="">Sem responsável</option>
                         {c.staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}

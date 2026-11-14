@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextStage, taskOwner } from "@/lib/board";
+import { nextStage, stageAging, taskOwner } from "@/lib/board";
 
 const base = {
   stage: "qualificacao" as const, parties: 0, assets: 0, previews: 0, open_findings: 0, serious_findings: 0,
@@ -38,5 +38,17 @@ describe("taskOwner", () => {
   it("emissão: boleto é com o cliente; emissão em andamento com a IA", () => {
     expect(taskOwner({ ...base, stage: "emissao", awaiting_payment: 1 })).toEqual({ who: "cliente", reason: "Pagar 1 boleto" });
     expect(taskOwner({ ...base, stage: "emissao", issuing: 2 }).who).toBe("ia");
+  });
+});
+
+
+describe("stageAging", () => {
+  const now = "2026-11-13T12:00:00Z";
+  it("no prazo, atenção e atrasado conforme o prazo da etapa", () => {
+    expect(stageAging("analise", "2026-11-13T08:00:00Z", now)).toEqual({ days: 0, sla: 3, state: "no_prazo" });
+    expect(stageAging("analise", "2026-11-10T11:00:00Z", now)).toEqual({ days: 3, sla: 3, state: "atencao" });
+    expect(stageAging("analise", "2026-11-09T11:00:00Z", now)).toEqual({ days: 4, sla: 3, state: "atrasado" });
+    expect(stageAging("consulta", "2026-11-11T11:00:00Z", now).state).toBe("atrasado");
+    expect(stageAging("concluido", "2026-01-01T00:00:00Z", now).state).toBe("no_prazo");
   });
 });

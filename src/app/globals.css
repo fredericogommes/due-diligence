@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
-/* Paleta inicial inspirada no padrão TETTU (marinho e roxo). Ajustável quando a marca for definida. */
+/* Paleta inspirada no padrão TETTU (marinho e roxo), em tons neutros de interface. */
 :root {
-  --bg: #f4f5f9;
+  --bg: #f6f7fa;
   --surface: #ffffff;
-  --muted: #eceef4;
-  --line: #d9dce6;
+  --muted: #f0f1f5;
+  --line: #e3e6ed;
   --ink: #16264d;
   --text: #1f2433;
   --subtle: #5c6378;
@@ -46,7 +46,8 @@
   --color-danger: var(--danger);
   --color-ok: var(--ok);
   --color-warn: var(--warn);
-  --font-sans: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-report: Calibri, Carlito, "Segoe UI", system-ui, sans-serif;
 }
 
 @page {
@@ -68,4 +69,21 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+}
+
+/* Menu lateral fixo no desktop: o conteúdo ganha o recuo da largura do menu. */
+@media (min-width: 1024px) {
+  body:has(> .app-sidebar) {
+    padding-left: 16rem;
+  }
+}
+@media print {
+  body:has(> .app-sidebar) {
+    padding-left: 0;
+  }
+}
+
+/* O relatório mantém a fonte do parecer TETTU. */
+.report {
+  font-family: var(--font-report);
 }

@@ -44,6 +44,7 @@ export type BoardRow = {
   issuing: number;
   issued: number;
   signed_version: number | null;
+  stage_changed_at: string;
 };
 
 type Counts = Pick<BoardRow, "stage" | "parties" | "assets" | "previews" | "awaiting_payment" | "issuing" | "issued">;
@@ -71,7 +72,7 @@ export const OWNER_LABEL: Record<TaskOwner["who"], string> = {
 };
 
 /** Com quem está a tarefa agora, e o que falta fazer. */
-export function taskOwner(r: Omit<BoardRow, "id" | "org_id" | "title" | "kind" | "price" | "status" | "assignee_id" | "client_id" | "created_at" | "updated_at">): TaskOwner {
+export function taskOwner(r: Omit<BoardRow, "id" | "org_id" | "title" | "kind" | "price" | "status" | "assignee_id" | "client_id" | "created_at" | "updated_at" | "stage_changed_at">): TaskOwner {
   switch (r.stage) {
     case "qualificacao": {
       const missing = [r.assets ? null : "o objeto (bem)", r.parties ? null : "as partes"].filter(Boolean);
@@ -90,4 +91,30 @@ export function taskOwner(r: Omit<BoardRow, "id" | "org_id" | "title" | "kind" |
     case "concluido":
       return { who: "ninguem", reason: "Concluído" };
   }
+}
+
+/** Prazo-alvo (dias corridos) para cada etapa; concluído não tem prazo. */
+export const STAGE_SLA_DAYS: Record<Stage, number | null> = {
+  qualificacao: 2,
+  consulta: 1,
+  analise: 3,
+  emissao: 7,
+  concluido: null,
+};
+
+/** Dias inteiros desde `since` até `now` (ISO). */
+export function daysSince(since: string, now: string): number {
+  return Math.max(0, Math.floor((Date.parse(now) - Date.parse(since)) / 86_400_000));
+}
+
+export type Aging = { days: number; sla: number | null; state: "no_prazo" | "atencao" | "atrasado" };
+
+/** Tempo na etapa e situação do prazo: atenção a partir de 75% do prazo. */
+export function stageAging(stage: Stage, stageChangedAt: string, now: string): Aging {
+  const days = daysSince(stageChangedAt, now);
+  const sla = STAGE_SLA_DAYS[stage];
+  if (sla == null) return { days, sla, state: "no_prazo" };
+  if (days > sla) return { days, sla, state: "atrasado" };
+  if (days >= Math.ceil(sla * 0.75) && days > 0) return { days, sla, state: "atencao" };
+  return { days, sla, state: "no_prazo" };
 }

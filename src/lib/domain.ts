@@ -90,6 +90,16 @@ export function formatBRL(value: number | string | null | undefined): string {
   return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+/** Valor curto para indicadores: "R$ 28,7 mi", "R$ 640 mil". */
+export function formatCompactBRL(value: number): string {
+  const abs = Math.abs(value);
+  const fmt = (n: number, unit: string) => `R$ ${n.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ${unit}`;
+  if (abs >= 1e9) return fmt(value / 1e9, "bi");
+  if (abs >= 1e6) return fmt(value / 1e6, "mi");
+  if (abs >= 1e3) return fmt(value / 1e3, "mil");
+  return formatBRL(value);
+}
+
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value.length === 10 ? `${value}T12:00:00` : value) : value;

@@ -13,7 +13,7 @@ export default function NewDealPage() {
       <AppHeader current="negocios" />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
         <Link href="/negocios" className="text-sm text-subtle hover:text-brand">← Negócios</Link>
-        <h1 className="mb-6 mt-2 text-2xl font-bold text-ink">Novo negócio</h1>
+        <h1 className="mb-6 mt-2 text-2xl font-semibold tracking-tight text-ink">Novo negócio</h1>
         <Suspense fallback={<p className="text-sm text-subtle">Carregando…</p>}>
           <FormLoader />
         </Suspense>

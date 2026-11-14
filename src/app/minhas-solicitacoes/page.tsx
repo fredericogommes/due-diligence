@@ -31,7 +31,7 @@ export default function ClientRequestsPage() {
     <>
       <AppHeader current="solicitacoes" />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold text-ink">Minhas solicitações</h1>
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-ink">Minhas solicitações</h1>
         <Suspense fallback={<p className="text-sm text-subtle">Carregando…</p>}>
           <Requests />
         </Suspense>

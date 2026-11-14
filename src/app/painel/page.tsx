@@ -2,20 +2,24 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
-import { taskOwner, type BoardRow } from "@/lib/board";
+import { stageAging, taskOwner, type BoardRow } from "@/lib/board";
 import type { MemberView } from "@/lib/members";
 import { createClient, getCurrentUserId } from "@/lib/supabase/server";
 import { Kanban, type Card } from "./kanban";
 
 export const metadata: Metadata = { title: "Painel · Due Diligence" };
 
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
 export default function BoardPage() {
   return (
     <>
       <AppHeader current="painel" />
-      <main className="w-full flex-1 px-4 py-8">
+      <main className="w-full flex-1 px-4 py-8 lg:px-8">
         <div className="mx-auto mb-6 max-w-[1600px]">
-          <h1 className="text-2xl font-bold text-ink">Painel de solicitações</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Quadro de pedidos</h1>
           <p className="text-sm text-subtle">
             Cada coluna é uma etapa. O selo mostra com quem está a tarefa agora: IA, humano ou cliente. Arraste um cartão para mudar a etapa.
           </p>
@@ -51,6 +55,7 @@ async function Board() {
     return m ? (m.full_name ?? m.email) : "ex-membro";
   };
 
+  const now = nowIso();
   const cards: Card[] = (rows ?? []).map((r) => ({
     id: r.id,
     title: r.title,
@@ -62,6 +67,7 @@ async function Board() {
     assigneeId: r.assignee_id,
     assigneeName: nameOf(r.org_id, r.assignee_id),
     owner: taskOwner(r),
+    aging: stageAging(r.stage, r.stage_changed_at, now),
     openFindings: r.open_findings,
     staff: (members.get(r.org_id) ?? [])
       .filter((m) => m.role !== "cliente")

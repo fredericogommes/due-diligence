@@ -17,7 +17,7 @@ export default function DealsPage() {
       <AppHeader current="negocios" />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold text-ink">Negócios</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Negócios</h1>
           <ButtonLink href="/negocios/novo">Novo negócio</ButtonLink>
         </div>
         <Suspense fallback={<p className="text-sm text-subtle">Carregando…</p>}>

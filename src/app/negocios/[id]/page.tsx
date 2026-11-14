@@ -104,7 +104,7 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
     <div className="mt-2 space-y-8">
       <section className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-ink">{deal.title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">{deal.title}</h1>
           <p className="mt-1 text-sm text-subtle">
             {DEAL_KIND_LABEL[deal.kind]} · {orgName} · valor {formatBRL(deal.price)} · criado em {formatDate(deal.created_at)}
           </p>
