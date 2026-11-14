@@ -109,6 +109,7 @@ export function ReportDocument({ report: r, conclusion, opinion }: { report: Rep
                 <strong>[{SEVERITY_LABEL[f.severity]}]</strong> {f.title}
                 {f.description && <span>: {f.description}</span>}
                 {f.evidence && <span className="italic text-[#5c6378]"> (“{f.evidence}”)</span>}
+                {f.status === "proposto" && <span className="text-[#b7791f]"> — sugerido automaticamente, pendente de confirmação pela equipe</span>}
               </li>
             ))}
           </ul>

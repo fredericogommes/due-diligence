@@ -128,6 +128,9 @@ export type FindingRow = {
   evidence: string | null;
   source: "ia" | "manual" | "consulta";
   resolved: boolean;
+  /** Estado do achado (M13). Opcional para dados de demonstração antigos. */
+  status?: import("./findings").FindingStatus;
+  resolution_note?: string | null;
   created_at: string;
 };
 
