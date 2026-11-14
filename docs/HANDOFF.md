@@ -77,3 +77,31 @@ Reverter os três commits da branch e, se as migrações tiverem sido aplicadas,
 **Reversão:** reverter o commit (só código).
 
 **Próximo na Fase 3:** `document_versions` imutáveis (nova versão sem apagar a anterior), quarentena antes de liberar para IA, categorias documentais e política de retenção (depende do jurídico da MK).
+
+---
+
+## Ciclo 2026-11-14 (madrugada) — afinar para a entrega
+
+| Campo | Valor |
+|---|---|
+| Responsável | Claude Code |
+| Branch | `feat/mk-entrega` (local, **contém tudo**: Fase 1 + Fase 3 + este ciclo; não enviada) |
+| Commit base | `3012e05` (main) |
+
+**Commits deste ciclo:** `b76b9d0` telas de erro/404/carregamento · `5668a41` aviso de evidência nova após versão revisada/assinada · `d41380a` estados dos achados com justificativa (M13) · `606cd72` versões de documentos (M14).
+
+**Testes:** `npm test` 195 passando; typecheck, lint e build ok. No navegador (contra o Supabase atual, sem as migrações novas): aviso de evidência nova aparece no negócio e no relatório; página 404 em português; `/macedo-keenan` idêntica (hash do texto, 16 links, sem rolagem lateral) em 390/768/1440. **Não testado no navegador:** ações de estado de achado e "Nova versão" de documento, porque dependem de M13/M14 no banco.
+
+### Para publicar (precisa de autorização do Fred)
+
+1. Aplicar no Supabase, nesta ordem: `20261114100000_m10`, `…110000_m11`, `…120000_m12`, `…130000_m13`, `…140000_m14` (todas aditivas; reversão no topo de cada arquivo).
+2. Testar no navegador: abrir documento (M12), assinar com revisor (M11), mudar estado de achado (M13), enviar nova versão (M14).
+3. Juntar `feat/mk-entrega` ao `main` e enviar (publica na Vercel).
+
+**Atenção:** a branch **não pode ir ao `main` antes das migrações**: abrir documento (M12), anexar documento (coluna `supersedes_id`, M14) e a tela de membros (M11) dependem delas.
+
+### Próximas fatias
+
+- IA com citação por página e incerteza (Fase 4) — depende da chave Anthropic e da avaliação do fluxo de dados.
+- Transições de etapa com pré-condições (Fase 2), checklists por segmento (rural, terreno, empreendimento).
+- Relatório: seção de limitações da análise e fontes consultadas (Fase 6).
