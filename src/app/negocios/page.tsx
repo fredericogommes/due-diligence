@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
-import { ButtonLink } from "@/components/ui";
+import { ButtonLink, LoadingSkeleton } from "@/components/ui";
 import type { DealProgressRow, DealRow } from "@/lib/db-types";
 import { DEAL_KIND_LABEL, DEAL_STATUS_LABEL, formatBRL, formatDate } from "@/lib/domain";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +20,7 @@ export default function DealsPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Negócios</h1>
           <ButtonLink href="/negocios/novo">Novo negócio</ButtonLink>
         </div>
-        <Suspense fallback={<p className="text-sm text-subtle">Carregando…</p>}>
+        <Suspense fallback={<div className="mt-4"><LoadingSkeleton /></div>}>
           <DealList />
         </Suspense>
       </main>

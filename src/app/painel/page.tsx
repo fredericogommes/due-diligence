@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { LoadingSkeleton } from "@/components/ui";
 import { AppHeader } from "@/components/app-header";
 import { stageAging, taskOwner, type BoardRow } from "@/lib/board";
 import type { MemberView } from "@/lib/members";
@@ -24,7 +25,7 @@ export default function BoardPage() {
             Cada coluna é uma etapa. O selo mostra com quem está a tarefa agora: IA, humano ou cliente. Arraste um cartão para mudar a etapa.
           </p>
         </div>
-        <Suspense fallback={<p className="mx-auto max-w-[1600px] text-sm text-subtle">Carregando…</p>}>
+        <Suspense fallback={<div className="mt-4"><LoadingSkeleton /></div>}>
           <Board />
         </Suspense>
       </main>

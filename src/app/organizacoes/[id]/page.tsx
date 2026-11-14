@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
+import { LoadingSkeleton } from "@/components/ui";
 import { AppHeader } from "@/components/app-header";
 import { AuditList } from "@/components/audit-list";
 import type { AuditRow } from "@/lib/audit";
@@ -19,7 +20,7 @@ export default function OrganizationPage({ params }: PageProps<"/organizacoes/[i
       <AppHeader current="organizacoes" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <Link href="/" className="text-sm text-subtle hover:text-brand">← Organizações</Link>
-        <Suspense fallback={<p className="mt-4 text-sm text-subtle">Carregando…</p>}>
+        <Suspense fallback={<div className="mt-4"><LoadingSkeleton /></div>}>
           <Organization params={params} />
         </Suspense>
       </main>

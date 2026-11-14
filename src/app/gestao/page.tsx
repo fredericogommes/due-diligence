@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { LoadingSkeleton } from "@/components/ui";
 import { AppHeader } from "@/components/app-header";
 import { STAGE_LABEL, type BoardRow } from "@/lib/board";
 import { formatBRL, formatCompactBRL } from "@/lib/domain";
@@ -33,7 +34,7 @@ export default function ManagementPage() {
             <Link href="/negocios/novo" className="rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong">Novo pedido</Link>
           </div>
         </div>
-        <Suspense fallback={<p className="text-sm text-subtle">Carregando…</p>}>
+        <Suspense fallback={<div className="mt-4"><LoadingSkeleton /></div>}>
           <Dashboard />
         </Suspense>
       </main>

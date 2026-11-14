@@ -71,3 +71,15 @@ export function CurrencyInput({ name, defaultValue = "" }: { name: string; defau
     </div>
   );
 }
+
+/** Esqueleto de carregamento (fallback de Suspense): blocos cinza pulsando no lugar do conteúdo. */
+export function LoadingSkeleton({ rows = 3, label = "Carregando…" }: { rows?: number; label?: string }) {
+  return (
+    <div role="status" aria-live="polite" className="space-y-3">
+      <span className="sr-only">{label}</span>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="h-20 animate-pulse rounded-xl border border-line bg-surface" style={{ opacity: 1 - i * 0.2 }} />
+      ))}
+    </div>
+  );
+}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { LoadingSkeleton } from "@/components/ui";
 import { AppHeader } from "@/components/app-header";
 import { assetLabel, buildChecklist, partyLabel, summarize, unassignedDocuments } from "@/lib/checklist/build";
 import { todaySaoPaulo } from "@/lib/checklist/validity";
@@ -33,7 +34,7 @@ export default function DealPage({ params }: PageProps<"/negocios/[id]">) {
       <AppHeader current="negocios" />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <Link href="/negocios" className="text-sm text-subtle hover:text-brand">← Negócios</Link>
-        <Suspense fallback={<p className="mt-4 text-sm text-subtle">Carregando…</p>}>
+        <Suspense fallback={<div className="mt-4"><LoadingSkeleton /></div>}>
           <DealDetail params={params} />
         </Suspense>
       </main>

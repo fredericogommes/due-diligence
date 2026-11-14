@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { LoadingSkeleton } from "@/components/ui";
 import { AppHeader } from "@/components/app-header";
 import { CLIENT_STAGE_LABEL, STAGES, type Stage } from "@/lib/board";
 import { DEAL_KIND_LABEL, formatBRL, formatDate, type DealKind } from "@/lib/domain";
@@ -32,7 +33,7 @@ export default function ClientRequestsPage() {
       <AppHeader current="solicitacoes" />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <h1 className="mb-6 text-2xl font-semibold tracking-tight text-ink">Minhas solicitações</h1>
-        <Suspense fallback={<p className="text-sm text-subtle">Carregando…</p>}>
+        <Suspense fallback={<div className="mt-4"><LoadingSkeleton /></div>}>
           <Requests />
         </Suspense>
       </main>
