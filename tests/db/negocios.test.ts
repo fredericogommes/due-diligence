@@ -36,14 +36,17 @@ beforeAll(async () => {
 }, 60_000);
 
 describe("modelos", () => {
-  it("existem os dois modelos com os itens esperados", async () => {
+  it("existem os modelos com os itens esperados (urbano, cotas e os de segmento da M16)", async () => {
     const rows = await asUser(db, ANA, (q) =>
       q<{ code: string; n: number }>(
         "select t.code, count(i.*)::int as n from public.checklist_templates t join public.template_items i on i.template_id = t.id group by t.code order by t.code",
       ),
     );
     expect(rows).toEqual([
+      { code: "IMV-COMERCIAL-v1", n: 28 },
       { code: "IMV-CV-v1", n: 25 },
+      { code: "IMV-RURAL-v1", n: 28 },
+      { code: "IMV-TERRENO-v1", n: 27 },
       { code: "TETTU-COTAS-v1", n: 35 },
     ]);
   });

@@ -27,10 +27,10 @@ export async function createDeal(_prev: ActionState, form: FormData): Promise<Ac
   const parsed = dealSchema.safeParse(formToObject(form));
   if (!parsed.success) return { error: firstError(parsed.error) };
 
-  const { orgId, kind, title, price, notes } = parsed.data;
+  const { orgId, kind, title, price, notes, templateId } = parsed.data;
   const { data, error } = await supabase
     .from("deals")
-    .insert({ org_id: orgId, kind, title, price: price ?? null, notes: notes ?? null })
+    .insert({ org_id: orgId, kind, title, price: price ?? null, notes: notes ?? null, ...(templateId ? { template_id: templateId } : {}) })
     .select("id")
     .single();
   if (error || !data) return { error: "Não foi possível criar o negócio." };

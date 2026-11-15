@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { LoadingSkeleton } from "@/components/ui";
 import { AppHeader } from "@/components/app-header";
 import { createClient } from "@/lib/supabase/server";
-import { NewDealForm } from "./new-deal-form";
+import { NewDealForm, type TemplateOption } from "./new-deal-form";
 
 export const metadata: Metadata = { title: "Novo negócio · Due Diligence" };
 
@@ -33,5 +33,10 @@ async function FormLoader() {
       </p>
     );
   }
-  return <NewDealForm orgs={orgs} />;
+  const { data: templates } = await supabase
+    .from("checklist_templates")
+    .select("id, name, deal_kind, description, is_default")
+    .eq("active", true)
+    .returns<TemplateOption[]>();
+  return <NewDealForm orgs={orgs} templates={templates ?? []} />;
 }

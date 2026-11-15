@@ -94,6 +94,8 @@ export const dealSchema = z.object({
     })
     .optional(),
   notes: optionalText(5000),
+  /** Modelo de checklist (segmento); vazio = padrão do tipo. O banco confere a compatibilidade. */
+  templateId: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.uuid().optional()),
 });
 
 export const partySchema = z
