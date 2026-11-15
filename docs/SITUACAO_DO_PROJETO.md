@@ -103,6 +103,7 @@ O dono respondeu "Sim, siga" às suposições propostas. Daí saíram estas deci
 | M2 | `1240051` | Upload para o Storage (`<org>/<negócio>/<uuid>-arquivo`, até 20 MB, PDF/imagem). Liga o arquivo ao item, calcula a validade e trata documentos fora do checklist |
 | M3 | `287d785` | "Ler com IA": tipo, emissor, datas, resultado, ônus e divergências. Gera riscos (`findings`) com gravidade e permite riscos manuais |
 | M4 | `f53fccf` | Relatório no formato do parecer TETTU, conclusão sugerida, parecer editável (`deal_opinions`) e impressão em A4 |
+| M15 | `729ff92` | Página principal `/` = página da MK; login no visual MK com "Sou cliente" e "Equipe do escritório"; cadastro público de clientes no escritório marcado (`accepts_public_clients`). Publicado em 15/11/2026 |
 | M13–M14 | branch `feat/mk-entrega` | Estados dos achados com justificativa; versões de documentos; aviso de evidência nova após versão assinada; telas de erro/404/carregamento. Migrações aplicadas e publicado em 14/11/2026 (`0a62d99`) |
 | M10–M12 | branch `feat/mk-f1-isolamento` (incluída em `feat/mk-entrega`) | **MK Fase 1** (especificação MK-01): FKs compostas `(org_id, deal_id)`, revisor jurídico como permissão explícita (`memberships.legal_reviewer`, ADR-0002) e auditoria de download de documentos. Aplicadas e publicadas em 14/11/2026 |
 | M9 | (ver git log) | Interface profissional (menu lateral fixo, fonte Inter, tons neutros; referências: shadcn/ui, next-shadcn-dashboard-starter, shadcn-admin, Plane) e **painel de gestão** `/gestao`: indicadores, pedidos por etapa, novos por semana, carga da equipe, "precisa de atenção agora" e tabela de todos os pedidos com busca/filtros/ordenação. **Prazos por etapa** (`deals.stage_changed_at`, `STAGE_SLA_DAYS` em `src/lib/board.ts`) com alerta de atrasado no quadro e na gestão. A organização de teste tem 14 pedidos fictícios para demonstração |
@@ -114,7 +115,7 @@ O dono respondeu "Sim, siga" às suposições propostas. Daí saíram estas deci
 ## 5. Mapa do código
 
 ```
-supabase/migrations/      16 migrações, aplicar EM ORDEM (m0 → m14)
+supabase/migrations/      17 migrações, aplicar EM ORDEM (m0 → m15)
 src/proxy.ts              proteção otimista das rotas (redireciona para /login)
 src/app/                  login, auth/confirm, página inicial (organizações)
 src/app/negocios/         lista, novo, [id] (detalhe), [id]/historico, [id]/relatorio e [id]/relatorio/versoes/[n]; *-actions.ts = Server Actions
