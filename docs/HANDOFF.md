@@ -133,3 +133,16 @@ Reverter os três commits da branch e, se as migrações tiverem sido aplicadas,
 - M15: `organizations.accepts_public_clients` + `join_public_client_org()`. Cliente que cria conta vira cliente do escritório marcado. Equipe não vira cliente.
 - Testes: 200 passando; no navegador, os 4 cenários de login e a raiz MK conferidos.
 - **Publicado em 15/11/2026** com autorização do Fred: M15 aplicada; escritório de demonstração renomeado para "Macedo & Keenan Advogados (demonstração)" e marcado como público; `main` = `729ff92`. Conferido em produção: raiz MK, 4 cenários de login e um cliente novo (`teste.novocliente@…`) entrando pela área do cliente e caindo em "Minhas solicitações". Cadastro de cliente novo por e-mail real ainda depende de SMTP próprio ou de desligar "Confirm email" no Supabase.
+
+---
+
+## Ciclo 2026-11-15 — MK Fase 2: etapas com pré-condições e checklists por segmento
+
+| Campo | Valor |
+|---|---|
+| Branch | `feat/mk-fase2-etapas` (local; base `d912de4` = main) |
+| Commits | `6d5f4c9` pré-condições de etapa · `52b7e78` checklists por segmento (M16) |
+
+- Avançar no quadro exige partes+objeto, consulta prévia e relatório assinado; concluir exige emissões encerradas; voltar é livre (`transitionBlock`, conferido no servidor). Emissão oficial só com relatório assinado. Testado no navegador.
+- M16: modelos "rural", "terreno ou lote" e "comercial" (iniciais, **a validar com o jurídico da MK**) e `is_default`. **Não aplicada no Supabase** (o filtro de segurança pede autorização específica). O código funciona sem ela: o seletor de segmento não aparece (verificado no navegador).
+- Testes: 206 passando; build ok. **Pendente:** autorização para aplicar M16 e para juntar ao `main`/publicar.
