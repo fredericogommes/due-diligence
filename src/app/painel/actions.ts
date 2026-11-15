@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { STAGES } from "@/lib/board";
+import { STAGES, transitionBlock, type BoardRow } from "@/lib/board";
 import { createClient, getCurrentUserId } from "@/lib/supabase/server";
 
 export type BoardState = { error?: string; ok?: boolean };
@@ -13,6 +13,11 @@ export async function moveDeal(dealId: string, stage: string): Promise<BoardStat
   const parsed = z.object({ dealId: z.uuid(), stage: z.enum(STAGES) }).safeParse({ dealId, stage });
   if (!parsed.success) return { error: "Etapa inválida." };
   const supabase = await createClient();
+  // Pré-condições conferidas no servidor com os dados atuais (não com o que a tela mostrava).
+  const { data: row } = await supabase.from("deal_board").select("*").eq("id", dealId).maybeSingle<BoardRow>();
+  if (!row) return { error: "Negócio não encontrado." };
+  const blocked = transitionBlock(row, parsed.data.stage);
+  if (blocked) return { error: blocked };
   const { error, count } = await supabase.from("deals").update({ stage: parsed.data.stage }, { count: "exact" }).eq("id", dealId);
   if (error || count === 0) return { error: "Não foi possível mover o negócio." };
   revalidatePath("/painel");

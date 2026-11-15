@@ -100,6 +100,7 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
     issueOpen: latestIssues.filter((i) => i.status === "aguardando_pagamento" || i.status === "pendente").length,
     issueDone: latestIssues.filter((i) => i.status === "concluido").length,
     aiEnabled: ai.aiEnabled,
+    reportSigned: (versionRows ?? []).some((v) => v.status === "assinado"),
   };
   const itemOptions = sections.flatMap((s) =>
     s.entries.map((e) => ({ id: e.id, label: `${e.code} · ${e.title}${e.subject ? ` (${e.subject})` : ""}` })),

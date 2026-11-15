@@ -180,6 +180,9 @@ export async function requestIssuance(dealId: string): Promise<CertificateState>
   const data = await loadDeal(dealId);
   if (!data) return { error: "Negócio não encontrado." };
   const supabase = await createClient();
+  // Emissão oficial só depois do relatório preliminar assinado (fase 2 do fluxo da MK).
+  const { count: signed } = await supabase.from("report_versions").select("id", { count: "exact", head: true }).eq("deal_id", dealId).eq("status", "assinado");
+  if (!signed) return { error: "Assine o relatório preliminar antes de pedir as certidões oficiais." };
   const today = todaySaoPaulo();
   const tpl = new Map(data.templateItems.map((t) => [t.id, t]));
   const openItems = new Set(data.certRequests.filter((r) => r.mode === "emissao" && OPEN_ISSUE.includes(r.status)).map((r) => r.deal_item_id));

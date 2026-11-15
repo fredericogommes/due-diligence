@@ -15,6 +15,8 @@ export type OnlineSummary = {
   positives: number;
   openFindings: number;
   issueOpen: number;
+  /** Há versão do relatório preliminar assinada (pré-condição da emissão oficial). */
+  reportSigned: boolean;
   issueDone: number;
   aiEnabled: boolean;
 };
@@ -82,7 +84,7 @@ export function OnlineCertificates({ dealId, summary: s, boletos }: { dealId: st
           </div>
         </Step>
 
-        <Step n={3} title="Relatório preliminar" done={false}>
+        <Step n={3} title="Relatório preliminar" done={s.reportSigned}>
           <p className="text-subtle">
             Inconsistências, riscos e apontamentos a partir das visualizações{s.openFindings ? ` (${s.openFindings} em aberto)` : ""}.
           </p>
@@ -99,7 +101,7 @@ export function OnlineCertificates({ dealId, summary: s, boletos }: { dealId: st
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={pending || !s.onlineItems}
+              disabled={pending || !s.onlineItems || !s.reportSigned}
               className={buttonClass("primary")}
               onClick={() => {
                 if (!confirm("Pedir a emissão das certidões oficiais? Cada certidão gera um boleto de emolumentos.")) return;
@@ -108,6 +110,7 @@ export function OnlineCertificates({ dealId, summary: s, boletos }: { dealId: st
             >
               Requerer certidões oficiais
             </button>
+            {!s.reportSigned && <span className="self-center text-xs text-subtle">Disponível depois que o relatório preliminar for assinado.</span>}
             {s.issueOpen > 0 && (
               <button type="button" disabled={pending} className={buttonClass("secondary")} onClick={() => run(() => checkIssuance(dealId))}>
                 Verificar pagamentos e emissões

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextStage, stageAging, taskOwner } from "@/lib/board";
+import { nextStage, stageAging, taskOwner, transitionBlock } from "@/lib/board";
 
 const base = {
   stage: "qualificacao" as const, parties: 0, assets: 0, previews: 0, open_findings: 0, serious_findings: 0,
@@ -12,7 +12,8 @@ describe("nextStage", () => {
     expect(nextStage({ ...base, parties: 1 })).toBe("qualificacao");
     expect(nextStage({ ...base, parties: 1, assets: 1 })).toBe("consulta");
     expect(nextStage({ ...base, parties: 1, assets: 1, previews: 5 })).toBe("analise");
-    expect(nextStage({ ...base, stage: "analise", awaiting_payment: 3 })).toBe("emissao");
+    expect(nextStage({ ...base, stage: "analise", awaiting_payment: 3 })).toBe("analise"); // sem relatório assinado não avança
+    expect(nextStage({ ...base, stage: "analise", awaiting_payment: 3, signed_version: 1 })).toBe("emissao");
     expect(nextStage({ ...base, stage: "emissao", issued: 3 })).toBe("concluido");
     expect(nextStage({ ...base, stage: "emissao", issued: 3, issuing: 1 })).toBe("emissao");
   });
@@ -50,5 +51,23 @@ describe("stageAging", () => {
     expect(stageAging("analise", "2026-11-09T11:00:00Z", now)).toEqual({ days: 4, sla: 3, state: "atrasado" });
     expect(stageAging("consulta", "2026-11-11T11:00:00Z", now).state).toBe("atrasado");
     expect(stageAging("concluido", "2026-01-01T00:00:00Z", now).state).toBe("no_prazo");
+  });
+});
+
+describe("transitionBlock", () => {
+  const ready = { ...base, parties: 1, assets: 1, previews: 3, signed_version: 1 };
+  it("voltar etapa é sempre permitido", () => {
+    expect(transitionBlock({ ...base, stage: "emissao" }, "qualificacao")).toBeNull();
+  });
+  it("avançar exige o passo anterior, com motivo claro", () => {
+    expect(transitionBlock(base, "consulta")).toMatch(/partes e o objeto/);
+    expect(transitionBlock({ ...base, parties: 1, assets: 1 }, "analise")).toMatch(/consulta prévia/);
+    expect(transitionBlock({ ...ready, signed_version: null }, "emissao")).toMatch(/Assine o relatório/);
+    expect(transitionBlock({ ...ready, stage: "emissao", awaiting_payment: 2 }, "concluido")).toMatch(/aguardando pagamento/);
+    expect(transitionBlock(ready, "emissao")).toBeNull();
+    expect(transitionBlock({ ...ready, stage: "emissao" }, "concluido")).toBeNull();
+  });
+  it("pular etapas também confere tudo o que ficou para trás", () => {
+    expect(transitionBlock(base, "concluido")).toMatch(/partes e o objeto/);
   });
 });

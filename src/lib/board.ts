@@ -47,7 +47,7 @@ export type BoardRow = {
   stage_changed_at: string;
 };
 
-type Counts = Pick<BoardRow, "stage" | "parties" | "assets" | "previews" | "awaiting_payment" | "issuing" | "issued">;
+type Counts = Pick<BoardRow, "stage" | "parties" | "assets" | "previews" | "awaiting_payment" | "issuing" | "issued"> & { signed_version?: number | null };
 
 /**
  * Para onde a etapa avança sozinha com o que já aconteceu. Só anda para a
@@ -57,7 +57,7 @@ export function nextStage(r: Counts): Stage {
   let s = r.stage;
   if (s === "qualificacao" && r.parties > 0 && r.assets > 0) s = "consulta";
   if (s === "consulta" && r.previews > 0) s = "analise";
-  if (s === "analise" && r.awaiting_payment + r.issuing + r.issued > 0) s = "emissao";
+  if (s === "analise" && r.signed_version && r.awaiting_payment + r.issuing + r.issued > 0) s = "emissao";
   if (s === "emissao" && r.issued > 0 && r.awaiting_payment === 0 && r.issuing === 0) s = "concluido";
   return s;
 }
@@ -117,4 +117,31 @@ export function stageAging(stage: Stage, stageChangedAt: string, now: string): A
   if (days > sla) return { days, sla, state: "atrasado" };
   if (days >= Math.ceil(sla * 0.75) && days > 0) return { days, sla, state: "atencao" };
   return { days, sla, state: "no_prazo" };
+}
+
+/**
+ * Pré-condições para mover um pedido para a etapa `to` (MK-01 §3: transições são
+ * comandos com pré-condições). Voltar etapa é sempre permitido; avançar exige que
+ * o passo anterior tenha sido feito. Devolve o motivo do bloqueio, ou null.
+ */
+export function transitionBlock(
+  r: Pick<BoardRow, "stage" | "parties" | "assets" | "previews" | "signed_version" | "awaiting_payment" | "issuing" | "issued">,
+  to: Stage,
+): string | null {
+  const from = STAGES.indexOf(r.stage);
+  const target = STAGES.indexOf(to);
+  if (target <= from) return null;
+  if (target >= STAGES.indexOf("consulta") && (r.parties === 0 || r.assets === 0)) {
+    return "Cadastre as partes e o objeto do negócio antes de avançar.";
+  }
+  if (target >= STAGES.indexOf("analise") && r.previews === 0) {
+    return "Faça a consulta prévia das certidões antes da análise.";
+  }
+  if (target >= STAGES.indexOf("emissao") && !r.signed_version) {
+    return "Assine o relatório preliminar antes de pedir as certidões oficiais.";
+  }
+  if (to === "concluido" && (r.awaiting_payment > 0 || r.issuing > 0)) {
+    return "Ainda há certidões oficiais aguardando pagamento ou emissão.";
+  }
+  return null;
 }
