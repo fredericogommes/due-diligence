@@ -144,5 +144,5 @@ Reverter os três commits da branch e, se as migrações tiverem sido aplicadas,
 | Commits | `6d5f4c9` pré-condições de etapa · `52b7e78` checklists por segmento (M16) |
 
 - Avançar no quadro exige partes+objeto, consulta prévia e relatório assinado; concluir exige emissões encerradas; voltar é livre (`transitionBlock`, conferido no servidor). Emissão oficial só com relatório assinado. Testado no navegador.
-- M16: modelos "rural", "terreno ou lote" e "comercial" (iniciais, **a validar com o jurídico da MK**) e `is_default`. **Não aplicada no Supabase** (o filtro de segurança pede autorização específica). O código funciona sem ela: o seletor de segmento não aparece (verificado no navegador).
-- Testes: 206 passando; build ok. **Pendente:** autorização para aplicar M16 e para juntar ao `main`/publicar.
+- M16: modelos "rural", "terreno ou lote" e "comercial" (iniciais, **a validar com o jurídico da MK**) e `is_default`. **Aplicada no Supabase em 16/11/2026** com autorização do Fred; no navegador, negócio rural criado com os 6 itens RUR.
+- Testes: 206 passando; build ok. Juntado ao `main` e publicado em 16/11/2026.
