@@ -28,7 +28,7 @@ export function AnalysisPanel({
         <button
           type="button"
           disabled={pending || !aiEnabled}
-          title={aiEnabled ? undefined : "Configure ANTHROPIC_API_KEY para ativar"}
+          title={aiEnabled ? undefined : "Configure o Vercel AI Gateway ou ANTHROPIC_API_KEY para ativar"}
           onClick={() => start(async () => setError((await analyzeDocument(dealId, documentId)).error))}
           className="rounded border border-brand/40 px-2 py-1 text-[11px] font-semibold text-brand hover:bg-brand/10 disabled:opacity-50"
         >

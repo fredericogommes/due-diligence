@@ -1,9 +1,9 @@
 "use server";
 
-import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { DEFAULT_MODEL, extractDocument, type ItemContext } from "@/lib/analysis/extract";
+import { aiConfig, createAiClient } from "@/lib/analysis/client";
+import { extractDocument, type ItemContext } from "@/lib/analysis/extract";
 import { buildFindings, mergeDocumentMeta } from "@/lib/analysis/findings";
 import type { Extraction } from "@/lib/analysis/schema";
 import { partyLabel, assetLabel } from "@/lib/checklist/build";
@@ -21,8 +21,9 @@ const ids = z.object({ dealId: z.uuid(), documentId: z.uuid() });
 export async function analyzeDocument(dealId: string, documentId: string): Promise<AnalysisState> {
   if (!(await getCurrentUserId())) return { error: "Sessão expirada. Entre de novo." };
   if (!ids.safeParse({ dealId, documentId }).success) return { error: "Documento inválido." };
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return { error: "Leitura por IA desativada: configure ANTHROPIC_API_KEY no servidor." };
+  const ai = aiConfig();
+  if (!ai) {
+    return { error: "Leitura por IA desativada: configure o Vercel AI Gateway ou ANTHROPIC_API_KEY no servidor." };
   }
 
   const supabase = await createClient();
@@ -33,7 +34,7 @@ export async function analyzeDocument(dealId: string, documentId: string): Promi
 
   const item = doc.deal_item_id ? await loadItemContext(supabase, doc.deal_item_id, deal.kind) : null;
 
-  const model = process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
+  const model = ai.model;
   const { data: analysis, error: insErr } = await supabase
     .from("document_analyses")
     .insert({ deal_id: dealId, document_id: documentId, status: "pendente", model })
@@ -50,13 +51,13 @@ export async function analyzeDocument(dealId: string, documentId: string): Promi
     return { error: "Não foi possível baixar o arquivo." };
   }
 
-  const result = await extractDocument(new Anthropic(), {
+  const result = await extractDocument(createAiClient(ai), {
     fileBase64: Buffer.from(await blob.arrayBuffer()).toString("base64"),
     mimeType: doc.mime_type as "application/pdf",
     fileName: doc.file_name,
     item,
     today: todaySaoPaulo(),
-  }, model);
+  }, model, { serverFallback: ai.via === "anthropic" });
 
   if (!result.ok) {
     await finish({ status: "erro", error: result.error });

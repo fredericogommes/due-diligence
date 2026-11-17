@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { aiEnabled } from "@/lib/analysis/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -57,7 +58,7 @@ async function DealDetail({ params }: { params: PageProps<"/negocios/[id]">["par
   ]);
   const stale = staleSince(versionRows ?? [], { documents, findings, parties, assets });
   const people = ((memberData as MemberView[] | null) ?? []).map((m) => ({ id: m.user_id, name: m.full_name ?? m.email, role: m.role }));
-  const ai = { analyses: latestAnalysis, aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY) };
+  const ai = { analyses: latestAnalysis, aiEnabled: aiEnabled() };
   const today = todaySaoPaulo();
   const sections = buildChecklist(items, templateItems, parties, assets, documents, today);
   const summary = summarize(sections);

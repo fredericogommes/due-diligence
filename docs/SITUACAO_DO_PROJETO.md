@@ -37,7 +37,7 @@ Itens com consulta online: `ONLINE_ITEM_CODES` em `src/lib/certidoes/providers.t
 | Teste de ponta a ponta | **Feito em 11/11/2026** com o banco real e duas contas de teste (`*@due-diligence.test`, senhas no `.env.local`): login, organização, negócio, bem, parte, checklist, upload, download por link temporário, pedido simulado, status, risco, parecer, versão revisada e assinada, histórico, convite e aceite, troca de papel. **Faltam:** cadastro com confirmação por e-mail (ver abaixo) e "Ler com IA" |
 | Tela verificada no navegador | `/demo/relatorio` (relatório com dados fictícios, só em desenvolvimento) e o redirecionamento para `/login` |
 | Demonstração para apresentar | `/macedo-keenan` (12/11/2026): página **pública** que reproduz o visual do site macedokeenan.adv.br (cores e fontes lidas do site, logos pelo CDN dele) com a seção "Due diligence" e o fluxo das duas fases simulado no navegador. Dados fictícios, sem banco |
-| Leitura por IA | Implementada e testada com dublê. **Nunca chamou a API real** (falta `ANTHROPIC_API_KEY`) |
+| Leitura por IA | Implementada e testada com dublê. Pode usar a chave da Anthropic **ou o Vercel AI Gateway** (token OIDC da Vercel). Em 16/11/2026 o Gateway respondeu 403: **falta cadastrar cartão na Vercel** para liberar os créditos grátis. **Nunca chamou a IA real** |
 | Certidões online (ONR) | Arquitetura pronta; o provedor fica **desativado de propósito** até chegarem a chave e a documentação oficial |
 | Deploy (Vercel) | **Não feito** |
 | GitHub / CI | Repositório privado `fredericogommes/due-diligence`. CI em `.github/workflows/ci.yml` (lint, typecheck, testes, build, gitleaks no histórico inteiro) **passando** |
@@ -55,6 +55,7 @@ Itens com consulta online: `ONLINE_ITEM_CODES` em `src/lib/certidoes/providers.t
 - **zod v4** para validação (`z.uuid()`, `z.email()`, `z.iso.date()`).
 - **IA: Anthropic SDK 1.8**.
   - Chamada: `client.beta.messages.parse` com `betaZodOutputFormat`, modelo `claude-opus-5-5` (configurável por `ANTHROPIC_MODEL`).
+  - Credencial em `src/lib/analysis/client.ts`: `ANTHROPIC_API_KEY` direto, senão Vercel AI Gateway (`AI_GATEWAY_API_KEY` ou `VERCEL_OIDC_TOKEN`, modelo `anthropic/claude-opus-5.5`, configurável por `AI_GATEWAY_MODEL`). No Gateway não se envia o fallback de servidor da Anthropic.
   - O PDF vai como bloco `document` em base64, com `effort: "medium"` e fallback de servidor.
   - Código em `src/lib/analysis/extract.ts`.
 - **Testes:** Vitest 5 + PGlite. `tests/db/harness.ts` cria um esqueleto do Supabase (`auth.users`, `auth.uid()`, papéis `anon`/`authenticated`, `storage.objects`) e aplica as **migrações reais**. Não precisa de Docker, que não está instalado no PC do dono.
@@ -143,7 +144,7 @@ tests/                    unitários; tests/db = banco e RLS sobre as migraçõe
 1. **Supabase: e-mail e URLs de autenticação** (painel do Supabase → Authentication).
    - O provedor de e-mail padrão do Supabase só envia para e-mails da equipe do projeto e recusa os demais (`email_address_invalid`). Para clientes reais se cadastrarem é preciso configurar um **SMTP próprio** (ex.: Resend, SES) em Authentication → Emails → SMTP.
    - Em **URL Configuration**, trocar o Site URL para `http://localhost:3100` (ou o domínio da Vercel) e cadastrar `http://localhost:3100/auth/confirm` e `https://SEU-DOMINIO/auth/confirm` nas Redirect URLs.
-2. **`ANTHROPIC_API_KEY`** para ligar a leitura por IA. Registrar a base legal de LGPD, porque os documentos vão para a API da Anthropic.
+2. **Ligar a leitura por IA:** cadastrar cartão na Vercel (AI Gateway → libera os créditos grátis) ou colocar `ANTHROPIC_API_KEY`. Testar só com documentos fictícios até registrar a base legal de LGPD, porque os documentos vão para o provedor de IA (no Gateway grátis não há retenção zero de dados).
 3. **Chave e documentação da API do registrodeimoveis.org.br.** O texto do pedido está pronto em [`PEDIDO_CHAVE_REGISTRO_IMOVEIS.md`](PEDIDO_CHAVE_REGISTRO_IMOVEIS.md).
 
 ### B. Trabalho técnico que vem logo depois do Supabase

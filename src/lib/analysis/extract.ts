@@ -6,7 +6,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { extractionSchema, normalizeDate, type Extraction } from "./schema";
 
-export const DEFAULT_MODEL = "claude-opus-5-5";
+import { DIRECT_DEFAULT_MODEL } from "./client";
+
+export const DEFAULT_MODEL = DIRECT_DEFAULT_MODEL;
 
 export type ItemContext = {
   code: string;
@@ -59,7 +61,17 @@ function itemText(item: ItemContext, today: string): string {
     .join("\n");
 }
 
-export async function extractDocument(client: MessagesClient, input: ExtractInput, model = DEFAULT_MODEL): Promise<ExtractResult> {
+export type ExtractOptions = {
+  /** Fallback de modelo feito pela própria Anthropic. Desligado no AI Gateway, que tem o seu. */
+  serverFallback?: boolean;
+};
+
+export async function extractDocument(
+  client: MessagesClient,
+  input: ExtractInput,
+  model = DEFAULT_MODEL,
+  { serverFallback = true }: ExtractOptions = {},
+): Promise<ExtractResult> {
   const fileBlock: Anthropic.Beta.BetaContentBlockParam =
     input.mimeType === "application/pdf"
       ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: input.fileBase64 }, title: input.fileName }
@@ -69,8 +81,7 @@ export async function extractDocument(client: MessagesClient, input: ExtractInpu
     const response = await client.beta.messages.parse({
       model,
       max_tokens: 16000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
+      ...(serverFallback ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
       output_config: { effort: "medium", format: betaZodOutputFormat(extractionSchema) },
       system: SYSTEM,
       messages: [
@@ -94,7 +105,10 @@ export async function extractDocument(client: MessagesClient, input: ExtractInpu
       outputTokens: response.usage.output_tokens,
     };
   } catch (err) {
-    if (err instanceof Anthropic.AuthenticationError) return { ok: false, error: "Chave da API da Anthropic inválida.", model };
+    if (err instanceof Anthropic.AuthenticationError) return { ok: false, error: "Credencial da IA inválida ou expirada.", model };
+    if (err instanceof Anthropic.PermissionDeniedError) {
+      return { ok: false, error: "Acesso à IA negado. No AI Gateway, confira se há cartão cadastrado na Vercel.", model };
+    }
     if (err instanceof Anthropic.RateLimitError) return { ok: false, error: "Limite de uso da IA atingido. Tente em alguns minutos.", model };
     if (err instanceof Anthropic.BadRequestError) return { ok: false, error: "A IA não aceitou o arquivo (tamanho ou formato).", model };
     if (err instanceof Anthropic.APIError) return { ok: false, error: `Falha na IA (${err.status ?? "rede"}).`, model };

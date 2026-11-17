@@ -1,5 +1,6 @@
 "use server";
 
+import { aiEnabled } from "@/lib/analysis/client";
 import { createHash, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -148,7 +149,7 @@ export async function runPreviews(dealId: string, refresh = false): Promise<Cert
 
   // Leitura por IA das visualizações novas (quando configurada).
   let aiRead = 0;
-  if (process.env.ANTHROPIC_API_KEY && newDocs.length) {
+  if (aiEnabled() && newDocs.length) {
     await inBatches(newDocs, 3, async (id) => {
       if (!(await analyzeDocument(dealId, id)).error) aiRead++;
     });
