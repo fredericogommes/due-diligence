@@ -11,7 +11,8 @@ describe("aiConfig", () => {
     expect(aiConfig({ ANTHROPIC_API_KEY: "k", VERCEL_OIDC_TOKEN: "t" })).toEqual({ via: "anthropic", apiKey: "k", model: "claude-opus-5-5" });
   });
   it("AI Gateway por chave própria ou pelo token OIDC da Vercel", () => {
-    expect(aiConfig({ VERCEL_OIDC_TOKEN: "t" })).toEqual({ via: "gateway", apiKey: "t", baseURL: GATEWAY_BASE_URL, model: "anthropic/claude-opus-5.5" });
+    expect(aiConfig({ VERCEL_OIDC_TOKEN: "t" })).toBeNull(); // token da Vercel sozinho não liga a IA
+    expect(aiConfig({ VERCEL_OIDC_TOKEN: "t", AI_GATEWAY_ENABLED: "1" })).toEqual({ via: "gateway", apiKey: "t", baseURL: GATEWAY_BASE_URL, model: "anthropic/claude-opus-5.5" });
     expect(aiConfig({ AI_GATEWAY_API_KEY: "g", VERCEL_OIDC_TOKEN: "t", AI_GATEWAY_MODEL: "anthropic/claude-sonnet-5.5" }))
       .toMatchObject({ apiKey: "g", model: "anthropic/claude-sonnet-5.5" });
   });

@@ -107,7 +107,7 @@ export async function extractDocument(
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) return { ok: false, error: "Credencial da IA inválida ou expirada.", model };
     if (err instanceof Anthropic.PermissionDeniedError) {
-      return { ok: false, error: "Acesso à IA negado. No AI Gateway, confira se há cartão cadastrado na Vercel.", model };
+      return { ok: false, error: "Acesso à IA negado. No AI Gateway, confira o cartão e os créditos pagos na Vercel.", model };
     }
     if (err instanceof Anthropic.RateLimitError) return { ok: false, error: "Limite de uso da IA atingido. Tente em alguns minutos.", model };
     if (err instanceof Anthropic.BadRequestError) return { ok: false, error: "A IA não aceitou o arquivo (tamanho ou formato).", model };
